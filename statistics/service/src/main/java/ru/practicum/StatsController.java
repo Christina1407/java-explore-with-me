@@ -8,13 +8,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.model.StatRequestParams;
-import ru.practicum.model.dto.StatDtoResponse;
 import ru.practicum.model.dto.HitDto;
+import ru.practicum.model.dto.StatDtoResponse;
 import ru.practicum.service.StatsService;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
