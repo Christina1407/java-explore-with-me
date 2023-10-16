@@ -1,5 +1,6 @@
 package ru.practicum;
 
+
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
 
@@ -14,7 +15,6 @@ import java.time.LocalDateTime;
 @Setter
 @Getter
 @ToString
-//TODO перенести
 public class HitDto {
     @NotBlank
     @Size(max = 2000, message = "uri is more than 2000 symbols")

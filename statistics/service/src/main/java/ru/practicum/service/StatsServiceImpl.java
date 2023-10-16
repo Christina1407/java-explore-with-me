@@ -2,13 +2,12 @@ package ru.practicum.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import ru.practicum.HitDto;
+import ru.practicum.StatDtoResponse;
 import ru.practicum.model.App;
 import ru.practicum.model.StatRequestParams;
-import ru.practicum.model.dto.HitDto;
-import ru.practicum.model.dto.StatDtoResponse;
 import ru.practicum.model.mapper.HitMapper;
 import ru.practicum.repo.AppRepository;
 import ru.practicum.repo.HitRepository;
@@ -42,7 +41,7 @@ public class StatsServiceImpl implements StatsService {
     }
 
     @Override
-    public Page<StatDtoResponse> getStats(StatRequestParams params, Pageable pageable) {
+    public List<StatDtoResponse> getStats(StatRequestParams params, Pageable pageable) {
         LocalDateTime start = params.getStart();
         LocalDateTime end = params.getEnd();
         List<String> uris = params.getUris();
@@ -56,6 +55,7 @@ public class StatsServiceImpl implements StatsService {
                 return hitRepository.findAllUris(start, end, pageable);
             }
         } else {
+            log.info("Получение статистики unique = {} по посещениям uri = {} за период start = {} end = {}", unique, uris, start, end);
             if (unique) {
                 return hitRepository.findUniqueUriIn(start, end, uris, pageable);
             } else {
