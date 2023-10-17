@@ -1,7 +1,6 @@
 package ru.practicum.exception;
 
 import lombok.Getter;
-import ru.practicum.exception.ExceptionResponse;
 
 import java.util.Map;
 

@@ -34,6 +34,6 @@ public interface HitRepository extends JpaRepository<Hit, Long> {
             + "and uri in :uris "
             + "group by h.app.name, h.uri "
             + "order by count(h.ip) desc")
-   List<StatDtoResponse> findUriIn(LocalDateTime start, LocalDateTime end, List<String> uris, Pageable pageable);
+    List<StatDtoResponse> findUriIn(LocalDateTime start, LocalDateTime end, List<String> uris, Pageable pageable);
 
 }

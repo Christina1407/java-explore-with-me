@@ -12,6 +12,7 @@ import ru.practicum.model.mapper.HitMapper;
 import ru.practicum.repo.AppRepository;
 import ru.practicum.repo.HitRepository;
 
+import javax.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
@@ -27,6 +28,7 @@ public class StatsServiceImpl implements StatsService {
     private final AppRepository appRepository;
 
     @Override
+    @Transactional
     public HitDto saveHit(HitDto hitDto) {
         String appName = hitDto.getApp();
         App app = appRepository.findByName(appName);
