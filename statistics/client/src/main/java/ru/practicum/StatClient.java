@@ -76,7 +76,7 @@ public class StatClient {
         Map<String, Object> parameters = Map.of(
                 "start", start.format(dateTimeFormatter),
                 "end", end.format(dateTimeFormatter),
-                "uris", isNull(uris) ? new ArrayList<>() : uris
+                "uris", isNull(uris) ? new ArrayList<>() : String.join(",", uris)
         );
         String url = "/stats?start={start}&end={end}&uris={uris}";
         ResponseEntity<List<StatDtoResponse>> response = getStatsResponse(parameters, url);
@@ -92,7 +92,7 @@ public class StatClient {
         Map<String, Object> parameters = Map.of(
                 "start", start.format(dateTimeFormatter),
                 "end", end.format(dateTimeFormatter),
-                "uris", isNull(uris) ? new ArrayList<>() : uris,
+                "uris", isNull(uris) ? new ArrayList<>() : String.join(",", uris),
                 "unique", unique
         );
         String url = "/stats?start={start}&end={end}&uris={uris}&unique={unique}";
@@ -127,7 +127,7 @@ public class StatClient {
         Map<String, Object> parameters = Map.of(
                 "start", start.format(dateTimeFormatter),
                 "end", end.format(dateTimeFormatter),
-                "uris", isNull(uris) ? new ArrayList<>() : uris,
+                "uris", isNull(uris) ? new ArrayList<>() : String.join(",", uris),
                 "unique", unique,
                 "page", page,
                 "size", size
