@@ -10,4 +10,8 @@ public interface UserRepository extends PagingAndSortingRepository<User, Long> {
 
 
     List<User> findByIdIn(List<Long> ids, Pageable pageable);
+
+    boolean existsByName(String userName);
+
+    boolean existsByEmail(String email);
 }

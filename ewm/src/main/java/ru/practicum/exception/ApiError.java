@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class ExceptionResponse {
+public class ApiError {
     private String status;
     private String reason;
     private String message;
