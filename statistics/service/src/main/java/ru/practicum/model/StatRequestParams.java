@@ -6,7 +6,7 @@ import lombok.Setter;
 import org.springframework.format.annotation.DateTimeFormat;
 import ru.practicum.validation.StartBeforeEndDateValid;
 
-import javax.validation.constraints.Past;
+import javax.validation.constraints.PastOrPresent;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -18,7 +18,7 @@ public class StatRequestParams {
     private static final String DATETIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
 
     @DateTimeFormat(pattern = DATETIME_FORMAT)
-    @Past(message = "start can't be in future")
+    @PastOrPresent(message = "start can't be in future")
     private LocalDateTime start;
     @DateTimeFormat(pattern = DATETIME_FORMAT)
     private LocalDateTime end;

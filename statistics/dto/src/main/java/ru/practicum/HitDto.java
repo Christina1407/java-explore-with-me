@@ -3,10 +3,7 @@ package ru.practicum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 import java.time.LocalDateTime;
 
 @AllArgsConstructor
@@ -28,5 +25,6 @@ public class HitDto {
     private String ip;
     @NotNull(message = "timestamp is null")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+    @PastOrPresent
     private LocalDateTime timestamp;
 }

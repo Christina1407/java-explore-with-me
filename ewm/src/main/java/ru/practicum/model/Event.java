@@ -26,29 +26,30 @@ public class Event {
     @ManyToOne
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
-    @Column(name = "description", length = 7000)
+    @Column(name = "description", nullable = false, length = 7000)
     private String description;
     @Column(name = "event_date", nullable = false)
     private LocalDateTime eventDate;
     @CreatedDate
     @Column(name = "created_date", nullable = false)
-    private LocalDateTime createdDate;
+    private LocalDateTime createdOn;
     @Column(name = "published_date", nullable = false)
-    private LocalDateTime publishedDate;
+    private LocalDateTime publishedOn;
     @ManyToOne
     @JoinColumn(name = "initiator_id", nullable = false)
     private User initiator;
     @ManyToOne
     @JoinColumn(name = "location_id", nullable = false)
     private Location location;
-    @Column(name = "paid", nullable = false)
-    private Boolean paid;
+    @Column(name = "paid")
+    private boolean paid;
     @Column(name = "participant_limit")
     private int participantLimit;
     @Column(name = "request_moderation")
     private Boolean requestModeration;
     @Column(name = "title", nullable = false, length = 120)
     private String title;
+    @Column(name = "state", nullable = false)
     @Enumerated(EnumType.STRING)
     private StateEnum state;
 }

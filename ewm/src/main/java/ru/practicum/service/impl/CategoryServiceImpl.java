@@ -1,6 +1,7 @@
 package ru.practicum.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.exception.ConflictException;
@@ -11,6 +12,8 @@ import ru.practicum.model.dto.CategoryDto;
 import ru.practicum.repo.CategoryRepository;
 import ru.practicum.repo.EventRepository;
 import ru.practicum.service.CategoryService;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -53,6 +56,12 @@ public class CategoryServiceImpl implements CategoryService {
         existsByNameAndCategoryIdNot(categoryDto.getName(), categoryId);
         categoryForUpdate.setName(categoryDto.getName());
         return categoryMapper.map(categoryForUpdate);
+    }
+
+    @Override
+    public List<CategoryDto> getAllCategories(Pageable pageable) {
+        List<Category> categories = categoryRepository.findAll(pageable).getContent();
+        return categoryMapper.map(categories);
     }
 
     private void existsByNameAndCategoryIdNot(String categoryName, Long categoryId) {
