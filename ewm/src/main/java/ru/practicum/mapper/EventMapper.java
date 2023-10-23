@@ -21,6 +21,6 @@ public interface EventMapper {
     @Mapping(target = "requestModeration", defaultValue = "true")
     Event map(NewEventDto newEventDto, Category existCategory, Location existLocation, User user, StateEnum stateEnum);
 
-    EventFullDto map(Event event);
+    EventFullDto map(Event event, Long views);
 
 }

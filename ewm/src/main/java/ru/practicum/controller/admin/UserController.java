@@ -37,9 +37,9 @@ public class UserController {
     }
 
     @GetMapping
-    public List<UserDto> getUsers(@RequestParam (name = "ids", required = false) List<Long> ids,
-                                            @RequestParam(name = "from", defaultValue = "0") @Min(0) int from,
-                                            @RequestParam(name = "size", defaultValue = "10") @Min(1) int size) {
+    public List<UserDto> getUsers(@RequestParam(name = "ids", required = false) List<Long> ids,
+                                  @RequestParam(name = "from", defaultValue = "0") @Min(0) int from,
+                                  @RequestParam(name = "size", defaultValue = "10") @Min(1) int size) {
         log.info("Попытка получения пользователей с параметрами ids = {}, from = {}, size = {} ", ids, from, size);
         Pageable pageable = PageRequest.of(from / size, size);
         return userService.getUsers(ids, pageable);

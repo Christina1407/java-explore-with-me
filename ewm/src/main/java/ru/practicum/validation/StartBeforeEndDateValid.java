@@ -1,4 +1,4 @@
-package ru.practicum.valid;
+package ru.practicum.validation;
 
 import javax.validation.Constraint;
 import javax.validation.Payload;
@@ -13,8 +13,8 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Retention(RUNTIME)
 @Documented
 @Constraint(validatedBy = CheckDateValidator.class)
-public @interface EventDateAfterNowValid {
-    String message() default "EventDate can't be earlier than two hours from the current moment";
+public @interface StartBeforeEndDateValid {
+    String message() default "Start must be before end or not null";
 
     Class<?>[] groups() default {};
 

@@ -13,6 +13,6 @@ public class UserManager {
     private final UserRepository userRepository;
 
     public User findUserById(Long userId) {
-        return userRepository.findById(userId).orElseThrow(() -> new NotFoundException("User with id =  " + userId + " was not found"));
+        return userRepository.findById(userId).orElseThrow(() -> new NotFoundException(String.format("User with id =  %d was not found", userId)));
     }
 }

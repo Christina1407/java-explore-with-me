@@ -9,6 +9,7 @@ import ru.practicum.model.dto.EventFullDto;
 import ru.practicum.model.dto.NewEventDto;
 import ru.practicum.service.EventService;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
 
@@ -26,5 +27,15 @@ public class EventPrivateController {
                                   @RequestBody @Valid NewEventDto newEventDto) {
         log.info("Попытка сохранения нового события {}", newEventDto);
         return eventService.saveEvent(userId, newEventDto);
+    }
+
+    @GetMapping("/{eventId}")
+    public EventFullDto findMyEventById(@PathVariable("userId") @Min(1) Long userId,
+                                        @PathVariable @Min(1) Long eventId,
+                                        HttpServletRequest request) {
+        log.info("Get event id = {} by user id = {}", eventId, userId);
+        String requestURI = request.getRequestURI();
+        log.info("endpoint path: {}", requestURI);
+        return eventService.findMyEventById(userId, eventId, requestURI);
     }
 }

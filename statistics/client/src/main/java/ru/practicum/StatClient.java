@@ -5,7 +5,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
-import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.client.RestTemplate;
@@ -32,15 +31,12 @@ public class StatClient {
     public StatClient(@Value("${stat-service.url}") String serverUrl, RestTemplateBuilder builder) {
         this.rest = builder
                 .uriTemplateHandler(new DefaultUriBuilderFactory(serverUrl))
-                .requestFactory(HttpComponentsClientHttpRequestFactory::new)
                 .build();
-        ;
     }
 
     public void saveHit(@NotBlank @Size(max = 2000, message = "uri is more than 2000 symbols") String uri,
                         @NotBlank @Size(max = 200, message = "appName is more than 200 symbols") String app,
-                        @NotBlank @Size(max = 50, message = "ip is more than 50 symbols")
-                        @Pattern(regexp = "^((25[0-5]|(2[0-4]|1[0-9]|[1-9]|)[0-9])(\\.(?!$)|$)){4}$", message = "Invalid IP Address") String ip,
+                        @NotBlank @Size(max = 50, message = "ip is more than 50 symbols") String ip,
                         @NotNull @PastOrPresent(message = "timestamp is null or in future") LocalDateTime timestamp) {
         HitDto hitDto = HitDto.builder()
                 .uri(uri)

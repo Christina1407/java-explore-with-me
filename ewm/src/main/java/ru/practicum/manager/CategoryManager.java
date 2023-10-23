@@ -13,6 +13,6 @@ public class CategoryManager {
 
     public Category findCategoryById(Long categoryId) {
         return categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new NotFoundException("Category with id = " + categoryId + " was not found"));
+                .orElseThrow(() -> new NotFoundException(String.format("Category with id = %d was not found", categoryId)));
     }
 }

@@ -2,7 +2,7 @@ package ru.practicum.model.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
-import ru.practicum.valid.EventDateAfterNowValid;
+import ru.practicum.validation.EventDateAfterNowValid;
 
 import javax.validation.constraints.Future;
 import javax.validation.constraints.NotBlank;

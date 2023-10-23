@@ -1,4 +1,4 @@
-package ru.practicum.valid;
+package ru.practicum.validation;
 
 
 
@@ -8,7 +8,7 @@ import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 import java.time.LocalDateTime;
 
-public class CheckDateValidator implements ConstraintValidator<EventDateAfterNowValid, NewEventDto> {
+public class CheckDateAfterValidator implements ConstraintValidator<EventDateAfterNowValid, NewEventDto> {
     public static final long MIN_HOURS_DIFFERENCE = 2;
     @Override
     public void initialize(EventDateAfterNowValid constraintAnnotation) {

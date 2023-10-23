@@ -42,7 +42,7 @@ create table if not exists events
                references categories (category_id),
     constraint fk_events_initiator_id
                foreign key (initiator_id)
-               references users (user_id),
+               references users (user_id) ON DELETE CASCADE,
     constraint fk_events_location_id
                    foreign key (location_id)
                    references locations (location_id)

@@ -14,7 +14,8 @@ import ru.practicum.controller.publicity.CategoryPublicController;
 import javax.validation.ConstraintViolationException;
 import java.time.LocalDateTime;
 
-@RestControllerAdvice(assignableTypes = {UserController.class, CategoryAdminController.class, CategoryPublicController.class, EventPrivateController.class})
+@RestControllerAdvice(assignableTypes = {UserController.class, CategoryAdminController.class, CategoryPublicController.class,
+        EventPrivateController.class, EventPrivateController.class})
 public class ExceptionsHandler {
 
     @ExceptionHandler
