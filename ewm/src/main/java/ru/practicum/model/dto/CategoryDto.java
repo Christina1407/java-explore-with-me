@@ -10,6 +10,7 @@ import javax.validation.constraints.Size;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@ToString
 public class CategoryDto {
     private Long id;
     @NotBlank(message = "name is empty")

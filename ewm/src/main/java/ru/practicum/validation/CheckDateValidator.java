@@ -1,6 +1,6 @@
 package ru.practicum.validation;
 
-import ru.practicum.model.GetEventsRequestParams;
+import ru.practicum.model.dto.GetEventsRequestParams;
 
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;

@@ -9,7 +9,7 @@ import javax.validation.ConstraintValidatorContext;
 import java.time.LocalDateTime;
 
 public class CheckDateAfterValidator implements ConstraintValidator<EventDateAfterNowValid, NewEventDto> {
-    public static final long MIN_HOURS_DIFFERENCE = 2;
+    public static final int MIN_HOURS_DIFFERENCE = 2;
     @Override
     public void initialize(EventDateAfterNowValid constraintAnnotation) {
     }

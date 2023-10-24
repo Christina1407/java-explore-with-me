@@ -6,9 +6,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.model.GetEventsRequestParams;
 import ru.practicum.model.dto.EventFullDto;
 import ru.practicum.model.dto.EventShortDto;
+import ru.practicum.model.dto.GetEventsRequestParams;
 import ru.practicum.service.EventService;
 
 import javax.servlet.http.HttpServletRequest;
