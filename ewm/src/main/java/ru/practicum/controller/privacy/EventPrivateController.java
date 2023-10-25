@@ -6,6 +6,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.model.dto.EventFullDto;
+import ru.practicum.model.dto.EventRequestStatusUpdateRequest;
+import ru.practicum.model.dto.EventRequestStatusUpdateResult;
 import ru.practicum.model.dto.NewEventDto;
 import ru.practicum.service.EventService;
 
@@ -37,5 +39,14 @@ public class EventPrivateController {
         String requestURI = request.getRequestURI();
         log.info("endpoint path: {}", requestURI);
         return eventService.findMyEventById(userId, eventId, requestURI);
+    }
+
+    @PatchMapping("{eventId}/requests")
+    public EventRequestStatusUpdateResult confirmOrRejectRequests(@PathVariable("userId") @Min(1) Long userId,
+                                                                  @PathVariable("eventId") @Min(1) Long eventId,
+                                                                  @RequestBody @Valid EventRequestStatusUpdateRequest eventRequestStatusUpdateRequest) {
+        log.info("Изменение статуса заявок {} на участие в событии id = {} пользователем id = {}",
+                eventRequestStatusUpdateRequest, eventId, userId);
+        return eventService.confirmOrRejectRequests(userId, eventId, eventRequestStatusUpdateRequest);
     }
 }

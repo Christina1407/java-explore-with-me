@@ -16,4 +16,6 @@ public interface EventService {
     List<EventShortDto> getEvents(GetEventsRequestParams params, Pageable pageable);
 
     EventFullDto updateEventByAdmin(Long eventId, UpdateEventAdminRequest updateEventAdminRequest);
+
+    EventRequestStatusUpdateResult confirmOrRejectRequests(Long userId, Long eventId, EventRequestStatusUpdateRequest eventRequestStatusUpdateRequest);
 }

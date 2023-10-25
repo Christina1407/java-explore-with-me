@@ -33,6 +33,7 @@ public class RequestServiceImpl implements RequestService {
     public ParticipationRequestDto saveRequest(Long userId, Long eventId) {
         User requester = userManager.findUserById(userId);
         Event event = eventManager.findEventById(eventId);
+        Request requestForSave;
 
         //Инициатор события не может добавить запрос на участие в своём событии
         if (Objects.equals(event.getInitiator().getId(), userId)) {
@@ -49,28 +50,32 @@ public class RequestServiceImpl implements RequestService {
                     "For the requested operation the conditions are not met.");
         }
         //Нельзя добавить повторный запрос
+        //TODO или если запрос 'REJECTED' или 'CANCELED', то можно?
         if (requestRepository.existsByRequesterIdAndEventId(userId, eventId)) {
             log.error("Request with eventId = {} and requesterId = {} already exists", eventId, userId);
             throw new ConflictException(String.format("Request with eventId = %d and requesterId = %d already exists", eventId, userId),
                     "Integrity constraint has been violated.");
         }
-        //Если у события достигнут лимит запросов на участие - необходимо вернуть ошибку
-        //TODO переделать. Ноль означает отсутствие ограничения. Нужно проверять кол-во подтв. запросов на участие и сравнивать с ParticipantLimit
-//        if (event.getParticipantLimit() == 0) {
-//            log.error("Event id = {} participant limit = {}", eventId, event.getParticipantLimit());
-//            throw new ConflictException(String.format("Event id = %d participant limit = %d." +
-//                    " The event has reached the ParticipantLimit", eventId, event.getParticipantLimit()),
-//                    "For the requested operation the conditions are not met.");
-//        }
 
-        //Если для события отключена премодерация запросов на участие, то запрос должен автоматически перейти в состояние подтвержденного
-        Request requestForSave;
-        if (event.getRequestModeration()) {
-            requestForSave = requestRepository.save(requestMapper.map(requester, event, StatusEnum.PENDING));
-        } else {
-            requestForSave = requestRepository.save(requestMapper.map(requester, event, StatusEnum.CONFIRMED));
+        //Если у события достигнут лимит запросов на участие - необходимо вернуть ошибку
+        long quantityOfConfirmedRequests = eventManager.getQuantityOfConfirmedRequests(event);
+        if (eventManager.isParticipantLimitHasBeenReached(event)) {
+            log.error("Event id = {} participant limit = {} and quantityOfConfirmedRequests = {}", eventId, event.getParticipantLimit(), quantityOfConfirmedRequests);
+            throw new ConflictException(String.format("Event id = %d participant limit = %d and quantityOfConfirmedRequests = %d." +
+                    " The participant limit has been reached", eventId, event.getParticipantLimit(), quantityOfConfirmedRequests),
+                    "For the requested operation the conditions are not met.");
         }
+
+        //Если для события лимит заявок равен 0 или отключена премодерация заявок, то подтверждение заявок не требуется
+        if (event.getParticipantLimit() == 0 || Boolean.FALSE.equals(event.getRequestModeration())) {
+            requestForSave = requestRepository.save(requestMapper.map(requester, event, StatusEnum.CONFIRMED));
+            return requestMapper.map(requestForSave);
+        }
+
+        requestForSave = requestRepository.save(requestMapper.map(requester, event, StatusEnum.PENDING));
         return requestMapper.map(requestForSave);
 
     }
+
+
 }

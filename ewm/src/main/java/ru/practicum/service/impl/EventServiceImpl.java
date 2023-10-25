@@ -13,21 +13,23 @@ import ru.practicum.manager.EventManager;
 import ru.practicum.manager.UserManager;
 import ru.practicum.mapper.EventMapper;
 import ru.practicum.mapper.LocationMapper;
-import ru.practicum.model.Category;
-import ru.practicum.model.Event;
-import ru.practicum.model.Location;
-import ru.practicum.model.User;
+import ru.practicum.mapper.RequestMapper;
+import ru.practicum.model.*;
 import ru.practicum.model.dto.*;
 import ru.practicum.model.enums.StateActionEnum;
 import ru.practicum.model.enums.StateEnum;
+import ru.practicum.model.enums.StatusEnum;
 import ru.practicum.repo.EventRepository;
 import ru.practicum.repo.LocationRepository;
 import ru.practicum.service.EventService;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static java.util.Objects.nonNull;
 
@@ -44,6 +46,7 @@ public class EventServiceImpl implements EventService {
     private final LocationRepository locationRepository;
     private final LocationMapper locationMapper;
     private final StatClient statClient;
+    private final RequestMapper requestMapper;
 
     public static final int MIN_HOURS_DIFFERENCE = 1;
 
@@ -100,7 +103,7 @@ public class EventServiceImpl implements EventService {
                     updateEventAdminRequest.getEventDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
                     LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")), MIN_HOURS_DIFFERENCE);
             throw new ConflictException(String.format("Difference between eventDate for change = %s " +
-                    "and now = %s less than %d hour(s)", updateEventAdminRequest.getEventDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
+                            "and now = %s less than %d hour(s)", updateEventAdminRequest.getEventDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
                     LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")), MIN_HOURS_DIFFERENCE),
                     "For the requested operation the conditions are not met.");
         }
@@ -128,6 +131,76 @@ public class EventServiceImpl implements EventService {
         }
         eventMapper.updateByAdmin(updateEventAdminRequest, category, eventForUpdate);
         return eventMapper.map(eventForUpdate, 0L); //TODO views
+    }
+
+    @Override
+    public EventRequestStatusUpdateResult confirmOrRejectRequests(Long userId, Long eventId, EventRequestStatusUpdateRequest eventRequestStatusUpdateRequest) {
+        userManager.findUserById(userId);
+        Event event = eventManager.findEventById(eventId);
+        checkInitiator(userId, event);
+        List<Request> eventsRequests = event.getRequests();
+
+        //проверяем все ли айдишники запросов на участие из eventRequestStatusUpdateRequest созданы к событию eventId
+        List<Long> requestIds = eventRequestStatusUpdateRequest.getRequestIds();
+        //лист реквестов из запроса, которые созданы к событию
+        List<Request> checkedRequests = eventsRequests.stream()
+                .filter(request -> requestIds.contains(request.getId()))
+                .sorted(Comparator.comparing(request -> requestIds.indexOf(request.getId())))
+                .collect(Collectors.toList());
+        if (checkedRequests.size() != requestIds.size()) {
+            log.error("RequestIds не были найдены среди ids созданных запросов на участие к событию id = {}", eventId);
+            throw new NotFoundException(String.format("RequestIds не были найдены среди ids созданных запросов на участие к событию id = %d.", eventId));
+        }
+
+        //Нельзя подтвердить заявку, если уже достигнут лимит по заявкам на данное событие (Ожидается код ошибки 409)
+        if (eventManager.isParticipantLimitHasBeenReached(event)) {
+            log.error("Event id = {} participantLimitHasBeenReached {}", eventId, eventManager.isParticipantLimitHasBeenReached(event));
+            throw new ConflictException(String.format("Event id = %d the participant limit has been reached.", eventId),
+                    "For the requested operation the conditions are not met.");
+        }
+
+        //Статус можно изменить только у заявок, находящихся в состоянии ожидания (Ожидается код ошибки 409)
+        List<Long> notPendingStatusRequestsIds = new ArrayList<>();
+        checkedRequests.forEach(
+                request -> {
+                    if (!request.getStatus().equals(StatusEnum.PENDING)) {
+                        notPendingStatusRequestsIds.add(request.getId());
+                    }
+                }
+        );
+        if (!notPendingStatusRequestsIds.isEmpty()) {
+            log.error("Request(s) id(s) = {} status(es) is(are) not PENDING. You can change requests only with status PENDING", notPendingStatusRequestsIds);
+            throw new ConflictException(String.format("Request(s) id(s) = %s status(es) is(are) not PENDING.", notPendingStatusRequestsIds),
+                    "For the requested operation the conditions are not met.");
+
+        }
+
+        ////Если при подтверждении заявки, лимит заявок для события исчерпан, то все неподтверждённые заявки(из запроса) отклоняются
+        //TODO или не из запроса тоже отменять? А если лимит увеличат?
+        checkedRequests.forEach(
+                request -> request.setStatus(StatusEnum.REJECTED)
+        );
+        List<Request> confirmedRequests = new ArrayList<>();
+        List<Request> rejectedRequests = new ArrayList<>();
+
+        if (eventRequestStatusUpdateRequest.getStatus().equals(StatusEnum.REJECTED)) {
+            rejectedRequests.addAll(checkedRequests);
+            return eventMapper.map(confirmedRequests, rejectedRequests);
+        }
+
+        if (eventRequestStatusUpdateRequest.getStatus().equals(StatusEnum.CONFIRMED)) {
+            checkedRequests.forEach(
+                    request -> {
+                        if (!eventManager.isParticipantLimitHasBeenReached(event)) {
+                            request.setStatus(StatusEnum.CONFIRMED);
+                            confirmedRequests.add(request);
+                        } else {
+                            rejectedRequests.add(request);
+                        }
+                    }
+            );
+        }
+        return eventMapper.map(confirmedRequests, rejectedRequests);
     }
 
     private void checkInitiator(Long userId, Event event) {

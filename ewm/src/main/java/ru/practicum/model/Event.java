@@ -7,6 +7,7 @@ import ru.practicum.model.enums.StateEnum;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Builder
 @Entity
@@ -52,4 +53,6 @@ public class Event {
     @Column(name = "state", nullable = false)
     @Enumerated(EnumType.STRING)
     private StateEnum state;
+    @OneToMany(mappedBy = "event")
+    private List<Request> requests;
 }

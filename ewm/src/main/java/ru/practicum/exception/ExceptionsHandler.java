@@ -1,7 +1,9 @@
 package ru.practicum.exception;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -17,7 +19,7 @@ import javax.validation.ConstraintViolationException;
 import java.time.LocalDateTime;
 
 @RestControllerAdvice(assignableTypes = {UserController.class, CategoryAdminController.class, CategoryPublicController.class,
-        EventPrivateController.class, EventPrivateController.class, RequestsController.class, EventAdminController.class})
+        EventPrivateController.class, EventPrivateController.class, RequestsController.class, EventAdminController.class, RequestsController.class})
 public class ExceptionsHandler {
 
     @ExceptionHandler
@@ -47,7 +49,8 @@ public class ExceptionsHandler {
         return new ApiError(HttpStatus.CONFLICT.name(), e.getReason(), e.getMessage(), LocalDateTime.now() );
     }
 
-    @ExceptionHandler({ConstraintViolationException.class, MethodArgumentTypeMismatchException.class})
+    @ExceptionHandler({ConstraintViolationException.class, MethodArgumentTypeMismatchException.class,
+            MissingServletRequestParameterException.class, HttpMessageNotReadableException.class})
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiError handleBadRequestException(final Exception e) {
         return new ApiError(HttpStatus.BAD_REQUEST.name(), "Incorrectly made request.", e.getMessage(), LocalDateTime.now() );
