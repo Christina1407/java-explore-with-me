@@ -2,18 +2,22 @@ package ru.practicum.controller.privacy;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.model.dto.EventFullDto;
-import ru.practicum.model.dto.EventRequestStatusUpdateRequest;
-import ru.practicum.model.dto.EventRequestStatusUpdateResult;
-import ru.practicum.model.dto.NewEventDto;
+import ru.practicum.exception.ConflictException;
+import ru.practicum.model.dto.*;
+import ru.practicum.model.enums.StateActionEnum;
 import ru.practicum.service.EventService;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
+import java.util.List;
+
+import static java.util.Objects.nonNull;
 
 @RestController
 @RequestMapping(path = "/users/{userId}/events")
@@ -22,6 +26,15 @@ import javax.validation.constraints.Min;
 @Validated
 public class EventPrivateController {
     private final EventService eventService;
+
+    @GetMapping
+    public List<EventShortDto> findInitiatorEvents(@PathVariable("userId") @Min(1) Long userId,
+                                                   @RequestParam(name = "from", defaultValue = "0") @Min(0) int from,
+                                                   @RequestParam(name = "size", defaultValue = "10") @Min(1) int size) {
+        log.info("Get events by user id = {}", userId);
+        Pageable pageable = PageRequest.of(from / size, size);
+        return eventService.findInitiatorEvents(userId, pageable);
+    }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -32,21 +45,47 @@ public class EventPrivateController {
     }
 
     @GetMapping("/{eventId}")
-    public EventFullDto findMyEventById(@PathVariable("userId") @Min(1) Long userId,
-                                        @PathVariable @Min(1) Long eventId,
-                                        HttpServletRequest request) {
+    public EventFullDto findInitiatorEventById(@PathVariable("userId") @Min(1) Long userId,
+                                               @PathVariable("eventId") @Min(1) Long eventId,
+                                               HttpServletRequest request) {
         log.info("Get event id = {} by user id = {}", eventId, userId);
-        String requestURI = request.getRequestURI();
-        log.info("endpoint path: {}", requestURI);
-        return eventService.findMyEventById(userId, eventId, requestURI);
+        String[] split = request.getRequestURI().split("/");
+        //URI как при сохранении статистики. Например "/events/4"
+        String requestURI = "/" + split[3] + "/" + split[4];
+        return eventService.findInitiatorEventById(userId, eventId, requestURI);
+    }
+
+    @PatchMapping("{eventId}")
+    public EventFullDto updateEventByInitiator(@PathVariable("userId") @Min(1) Long userId,
+                                               @PathVariable("eventId") @Min(1) Long eventId,
+                                               @RequestBody @Valid UpdateEventRequest updateEventUserRequest) {
+
+        StateActionEnum stateAction = updateEventUserRequest.getStateAction();
+        if (nonNull(stateAction) && !stateAction.equals(StateActionEnum.SEND_TO_REVIEW) &&
+                !stateAction.equals(StateActionEnum.CANCEL_REVIEW)) {
+            throw new ConflictException(String.format("StateAction = %s. For user endpoint StateAction must be " +
+                    "SEND_TO_REVIEW or CANCEL_REVIEW", stateAction), "For the requested operation the conditions are not met.");
+        }
+
+        log.info("Изменение события id = {} {} пользователем id = {}",
+                eventId, updateEventUserRequest, userId);
+        return eventService.updateEventByInitiator(userId, eventId, updateEventUserRequest);
+    }
+
+    @GetMapping("/{eventId}/requests")
+    public List<ParticipationRequestDto> findRequestsByInitiatorOfEvent(@PathVariable("userId") @Min(1) Long userId,
+                                                                        @PathVariable("eventId") @Min(1) Long eventId) {
+        log.info("Получение информации о запросах на участие в событии id = {} текущего пользователя id = {}", eventId, userId);
+        return eventService.findRequestsByInitiatorOfEvent(userId, eventId);
     }
 
     @PatchMapping("{eventId}/requests")
-    public EventRequestStatusUpdateResult confirmOrRejectRequests(@PathVariable("userId") @Min(1) Long userId,
-                                                                  @PathVariable("eventId") @Min(1) Long eventId,
-                                                                  @RequestBody @Valid EventRequestStatusUpdateRequest eventRequestStatusUpdateRequest) {
+    public EventRequestStatusUpdateResult confirmOrRejectRequestsByInitiatorOfEvent(
+            @PathVariable("userId") @Min(1) Long userId,
+            @PathVariable("eventId") @Min(1) Long eventId,
+            @RequestBody @Valid EventRequestStatusUpdateRequest eventRequestStatusUpdateRequest) {
         log.info("Изменение статуса заявок {} на участие в событии id = {} пользователем id = {}",
                 eventRequestStatusUpdateRequest, eventId, userId);
-        return eventService.confirmOrRejectRequests(userId, eventId, eventRequestStatusUpdateRequest);
+        return eventService.confirmOrRejectRequestsByInitiatorOfEvent(userId, eventId, eventRequestStatusUpdateRequest);
     }
 }

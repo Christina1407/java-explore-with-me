@@ -5,7 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.exception.ConflictException;
+import ru.practicum.exception.NotFoundException;
 import ru.practicum.manager.EventManager;
+import ru.practicum.manager.RequestManager;
 import ru.practicum.manager.UserManager;
 import ru.practicum.mapper.RequestMapper;
 import ru.practicum.model.Event;
@@ -17,6 +19,7 @@ import ru.practicum.model.enums.StatusEnum;
 import ru.practicum.repo.RequestRepository;
 import ru.practicum.service.RequestService;
 
+import java.util.List;
 import java.util.Objects;
 
 @Service
@@ -26,6 +29,7 @@ import java.util.Objects;
 public class RequestServiceImpl implements RequestService {
     private final EventManager eventManager;
     private final UserManager userManager;
+    private final RequestManager requestManager;
     private final RequestMapper requestMapper;
     private final RequestRepository requestRepository;
 
@@ -74,7 +78,28 @@ public class RequestServiceImpl implements RequestService {
 
         requestForSave = requestRepository.save(requestMapper.map(requester, event, StatusEnum.PENDING));
         return requestMapper.map(requestForSave);
+    }
 
+    @Override
+    public List<ParticipationRequestDto> findRequests(Long userId) {
+        userManager.findUserById(userId);
+        return requestMapper.map(requestRepository.findByRequesterId(userId));
+    }
+
+    @Override
+    public ParticipationRequestDto cancelRequestByRequester(Long userId, Long requestId) {
+        userManager.findUserById(userId);
+        Request requestForCancel = requestManager.findRequestById(requestId);
+        checkRequester(userId, requestForCancel);
+        requestForCancel.setStatus(StatusEnum.CANCELED);
+        return requestMapper.map(requestForCancel);
+    }
+
+    private void checkRequester(Long userId, Request request) {
+        if (!Objects.equals(request.getRequester().getId(), userId)) {
+            log.error("Пользователь c id = {} не инициатор запроса id = {}.", userId, request.getId());
+            throw new NotFoundException(String.format("Пользователь c id = %d не инициатор запроса id = %d.", userId, request.getId()));
+        }
     }
 
 

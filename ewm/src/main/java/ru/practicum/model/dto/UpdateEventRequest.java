@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Builder
 @ToString
-public class UpdateEventAdminRequest {
+public class UpdateEventRequest {
 
     @Size(min = 20, max = 2000, message = "annotation minLength = 20 maxLength = 2000")
     private String annotation;
@@ -31,5 +31,4 @@ public class UpdateEventAdminRequest {
     private StateActionEnum stateAction;
     @Size(min = 3, max = 120, message = "title minLength = 3 maxLength = 120")
     private String title;
-
 }

@@ -16,6 +16,7 @@ public class EventManager {
         return eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException(String.format("Event with id = %d was not found", eventId)));
     }
+
     public boolean isParticipantLimitHasBeenReached(Event event) {
         return event.getParticipantLimit() != 0 && event.getParticipantLimit() == event.getRequests().stream()
                 .filter(request -> request.getStatus().equals(StatusEnum.CONFIRMED))

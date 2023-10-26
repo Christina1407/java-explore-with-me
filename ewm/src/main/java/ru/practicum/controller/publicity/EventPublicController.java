@@ -40,6 +40,6 @@ public class EventPublicController {
         log.info("client ip: {}", ip);
         String requestURI = request.getRequestURI();
         log.info("endpoint path: {}", requestURI);
-        return eventService.publicFindEventById(eventId, ip, requestURI);
+        return eventService.findEventByIdPublic(eventId, ip, requestURI);
     }
 }
