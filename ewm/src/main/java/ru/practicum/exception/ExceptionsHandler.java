@@ -9,18 +9,21 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import ru.practicum.controller.admin.CategoryAdminController;
+import ru.practicum.controller.admin.CompilationAdminController;
 import ru.practicum.controller.admin.EventAdminController;
 import ru.practicum.controller.admin.UserController;
 import ru.practicum.controller.privacy.EventPrivateController;
 import ru.practicum.controller.privacy.RequestsController;
 import ru.practicum.controller.publicity.CategoryPublicController;
+import ru.practicum.controller.publicity.CompilationPublicController;
 import ru.practicum.controller.publicity.EventPublicController;
 
 import javax.validation.ConstraintViolationException;
 import java.time.LocalDateTime;
 
 @RestControllerAdvice(assignableTypes = {UserController.class, CategoryAdminController.class, CategoryPublicController.class,
-        EventPrivateController.class, EventPublicController.class, EventAdminController.class, RequestsController.class})
+        EventPrivateController.class, EventPublicController.class, EventAdminController.class, RequestsController.class,
+        CompilationAdminController.class, CompilationPublicController.class})
 public class ExceptionsHandler {
 
     @ExceptionHandler

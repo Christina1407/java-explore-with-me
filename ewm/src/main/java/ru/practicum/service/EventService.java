@@ -9,7 +9,7 @@ public interface EventService {
     EventFullDto saveEvent(Long userId, NewEventDto newEventDto);
 
 
-    EventFullDto findInitiatorEventById(Long userId, Long eventId, String requestURI);
+    EventFullDto findInitiatorEventById(Long userId, Long eventId);
 
     EventFullDto findEventByIdPublic(Long eventId, String ip, String requestURI);
 

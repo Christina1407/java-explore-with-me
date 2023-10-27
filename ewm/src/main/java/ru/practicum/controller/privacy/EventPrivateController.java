@@ -49,10 +49,7 @@ public class EventPrivateController {
                                                @PathVariable("eventId") @Min(1) Long eventId,
                                                HttpServletRequest request) {
         log.info("Get event id = {} by user id = {}", eventId, userId);
-        String[] split = request.getRequestURI().split("/");
-        //URI как при сохранении статистики. Например "/events/4"
-        String requestURI = "/" + split[3] + "/" + split[4];
-        return eventService.findInitiatorEventById(userId, eventId, requestURI);
+        return eventService.findInitiatorEventById(userId, eventId);
     }
 
     @PatchMapping("{eventId}")
@@ -60,6 +57,7 @@ public class EventPrivateController {
                                                @PathVariable("eventId") @Min(1) Long eventId,
                                                @RequestBody @Valid UpdateEventRequest updateEventUserRequest) {
 
+        //Если меняется состояние события, то значения могут быть SEND_TO_REVIEW или CANCEL_REVIEW
         StateActionEnum stateAction = updateEventUserRequest.getStateAction();
         if (nonNull(stateAction) && !stateAction.equals(StateActionEnum.SEND_TO_REVIEW) &&
                 !stateAction.equals(StateActionEnum.CANCEL_REVIEW)) {

@@ -12,7 +12,7 @@ import java.util.List;
 @Setter
 @AllArgsConstructor
 @Builder
-@JsonInclude(JsonInclude.Include.NON_EMPTY) //TODO может не надо
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class EventRequestStatusUpdateResult {
     private List<ParticipationRequestDto> confirmedRequests;
     private List<ParticipationRequestDto> rejectedRequests;

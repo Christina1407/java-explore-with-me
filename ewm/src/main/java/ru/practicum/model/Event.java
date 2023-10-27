@@ -55,4 +55,14 @@ public class Event {
     private StateEnum state;
     @OneToMany(mappedBy = "event")
     private List<Request> requests;
+    @ManyToMany
+    @JoinTable(
+            name = "events_compilations",
+            joinColumns = @JoinColumn(name = "event_id"),
+            inverseJoinColumns = @JoinColumn(name = "compilation_id"))
+    List<Compilation> compilations;
+    @Transient
+    private Long views;
+    @Transient
+    private Long confirmedRequests;
 }

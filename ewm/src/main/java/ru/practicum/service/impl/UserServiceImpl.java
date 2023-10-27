@@ -28,7 +28,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto saveUser(UserDto userDto) {
-        //провеярем, что имени и почты нет в базе
+        //проверяем, что имени и почты нет в базе
         existsByName(userDto.getName());
         existsByEmail(userDto.getEmail());
         User user = userMapper.map(userDto);
@@ -44,11 +44,10 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(readOnly = true)
     public List<UserDto> getUsers(List<Long> ids, Pageable pageable) {
-        if (isNull(ids) || ids.isEmpty()) {
-             return userMapper.map(userRepository.findAll(pageable).getContent());
-        } else {
-            return userMapper.map(userRepository.findByIdIn(ids, pageable));
-        }
+        List<User> users = (isNull(ids) || ids.isEmpty()) ?
+                userRepository.findAll(pageable).getContent():
+                userRepository.findByIdIn(ids, pageable);
+        return userMapper.map(users);
     }
 
     private void existsByName(String userName) {

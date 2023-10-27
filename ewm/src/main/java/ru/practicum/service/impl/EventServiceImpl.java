@@ -6,7 +6,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.StatClient;
-import ru.practicum.StatDtoResponse;
 import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.NotFoundException;
 import ru.practicum.manager.CategoryManager;
@@ -58,24 +57,19 @@ public class EventServiceImpl implements EventService {
         Location location = locationRepository.save(locationMapper.map(newEventDto.getLocation()));
         Event eventForSave = eventMapper.map(newEventDto, category, location, user, StateEnum.PENDING);
         Event event = eventRepository.save(eventForSave);
-        return eventMapper.map(event, null, null);//TODO check mapper
+        return eventMapper.map(event); //TODO check mapper
     }
 
     @Override
     @Transactional(readOnly = true)
-    public EventFullDto findInitiatorEventById(Long userId, Long eventId, String requestURI) {
+    public EventFullDto findInitiatorEventById(Long userId, Long eventId) {
         Event event = eventManager.findEventById(eventId);
-        //проверка, что информацию получает инициатор события
+        //Проверка, что информацию получает инициатор события
         checkInitiator(userId, event);
-
         //Если событие опубликовано, то нужно добавить просмотры и запросы
-        long views = 0;
-        long confirmedRequests = 0;
-        if (Objects.equals(event.getState(), StateEnum.PUBLISHED)) {
-            views = getViews(requestURI, event);
-            confirmedRequests = eventManager.getQuantityOfConfirmedRequests(event);
-        }
-        return eventMapper.map(event, views, confirmedRequests);
+        eventManager.enrichEventByConfirmedRequests(event);
+        eventManager.enrichEventByViews(event);
+        return eventMapper.map(event);
     }
 
     @Override
@@ -89,13 +83,13 @@ public class EventServiceImpl implements EventService {
             throw new NotFoundException(String.format("State of event id = %d is not PUBLISHED", eventId));
         }
         //Информация о событии должна включать в себя количество просмотров и количество подтвержденных запросов
-        long confirmedRequests = eventManager.getQuantityOfConfirmedRequests(event);
-        long views = getViews(requestURI, event);
+        eventManager.enrichEventByConfirmedRequests(event);
+        eventManager.enrichEventByViews(event);
 
         //Информацию о том, что по этому эндпоинту был осуществлен и обработан запрос, нужно сохранить в сервисе статистики
         statClient.saveHit(requestURI, "ewm", ip, LocalDateTime.now());
 
-        return eventMapper.map(event, views, confirmedRequests);
+        return eventMapper.map(event);
     }
 
     @Override
@@ -134,7 +128,7 @@ public class EventServiceImpl implements EventService {
 
         eventMapper.update(updateEventUserRequest, category, eventForUpdate);
 
-        return eventMapper.map(eventForUpdate, null, null);
+        return eventMapper.map(eventForUpdate);
     }
 
     @Override
@@ -142,18 +136,10 @@ public class EventServiceImpl implements EventService {
     public List<EventShortDto> findInitiatorEvents(Long userId, Pageable pageable) {
         userManager.findUserById(userId);
         List<Event> events = eventRepository.findByInitiatorId(userId, pageable);
-        List<EventShortDto> eventShortDtoList = new ArrayList<>();
 
-        events.forEach(event -> {
-            long views = 0;
-            long confirmedRequests = 0;
-            if (Objects.equals(event.getState(), StateEnum.PUBLISHED)) {
-                views = getViews("/events/" + event.getId(), event);
-                confirmedRequests = eventManager.getQuantityOfConfirmedRequests(event);
-            }
-            eventShortDtoList.add(eventMapper.mapToShortDto(event, views, confirmedRequests));
-        });
-        return eventShortDtoList;
+        eventManager.enrichEventsByViews(events);
+        eventManager.enrichEventsByConfirmedRequests(events);
+        return eventMapper.map(events);
     }
 
     @Override
@@ -184,7 +170,7 @@ public class EventServiceImpl implements EventService {
         Category category = getCategory(updateEventAdminRequest);
 
         eventMapper.update(updateEventAdminRequest, category, eventForUpdate);
-        return eventMapper.map(eventForUpdate, null, null); //у события еще не может быть запросов и просмотров
+        return eventMapper.map(eventForUpdate); //у события еще не может быть запросов и просмотров
     }
 
     @Override
@@ -193,11 +179,11 @@ public class EventServiceImpl implements EventService {
 
         Event event = eventManager.findEventById(eventId);
         checkInitiator(userId, event);
-        List<Request> eventsRequests = event.getRequests();
 
-        //проверяем все ли айдишники запросов на участие из eventRequestStatusUpdateRequest созданы к событию eventId
+        //Проверяем все ли айдишники запросов на участие из eventRequestStatusUpdateRequest относятся к событию eventId
+        List<Request> eventsRequests = event.getRequests();
         List<Long> requestIds = eventRequestStatusUpdateRequest.getRequestIds();
-        //лист реквестов из запроса, которые созданы к событию
+        //Лист реквестов из запроса, которые созданы к событию
         List<Request> checkedRequests = eventsRequests.stream()
                 .filter(request -> requestIds.contains(request.getId()))
                 .sorted(Comparator.comparing(request -> requestIds.indexOf(request.getId())))
@@ -220,7 +206,6 @@ public class EventServiceImpl implements EventService {
             log.error("Request(s) id(s) = {} status(es) is(are) not PENDING. You can change requests only with status PENDING", notPendingStatusRequestsIds);
             throw new ConflictException(String.format("Request(s) id(s) = %s status(es) is(are) not PENDING.", notPendingStatusRequestsIds),
                     "For the requested operation the conditions are not met.");
-
         }
 
         //Нельзя подтвердить заявку, если уже достигнут лимит по заявкам на данное событие (Ожидается код ошибки 409)
@@ -230,8 +215,7 @@ public class EventServiceImpl implements EventService {
                     "For the requested operation the conditions are not met.");
         }
 
-        ////Если при подтверждении заявки, лимит заявок для события исчерпан, то все неподтверждённые заявки(из запроса) отклоняются
-        //TODO или не из запроса тоже отменять? А если лимит увеличат?
+        //Если при подтверждении заявки, лимит заявок для события исчерпан, то все неподтверждённые заявки(из запроса) отклоняются
         checkedRequests.forEach(
                 request -> request.setStatus(StatusEnum.REJECTED)
         );
@@ -295,14 +279,5 @@ public class EventServiceImpl implements EventService {
             category = categoryManager.findCategoryById(updateEventRequest.getCategory());
         }
         return category;
-    }
-
-    private long getViews(String requestURI, Event event) {
-        long views = 0;
-        List<StatDtoResponse> stats = statClient.getStats(event.getPublishedOn(), LocalDateTime.now().plusDays(365), List.of(requestURI), true);
-        if (!stats.isEmpty()) {
-            views = stats.get(0).getHits();
-        }
-        return views;
     }
 }

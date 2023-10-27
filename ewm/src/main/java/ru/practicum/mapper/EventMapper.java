@@ -21,12 +21,12 @@ public interface EventMapper {
     @Mapping(target = "requestModeration", defaultValue = "true")
     Event map(NewEventDto newEventDto, Category existCategory, Location existLocation, User user, StateEnum stateEnum);
 
-    EventFullDto map(Event event, Long views, Long confirmedRequests);
-
-    EventShortDto mapToShortDto(Event event, Long views, Long confirmedRequests);
+    EventFullDto map(Event event);
 
     @Mapping(target = "category", source = "existCategory")
     @Mapping(target = "id", ignore = true)
     void update(UpdateEventRequest updateEventRequest, Category existCategory, @MappingTarget Event event);
     EventRequestStatusUpdateResult map(List<Request> confirmedRequests, List<Request> rejectedRequests);
+
+    List<EventShortDto> map(List<Event> events);
 }

@@ -26,6 +26,8 @@ public class EventAdminController {
     @PatchMapping("{eventId}")
     public EventFullDto updateEventByAdmin(@PathVariable("eventId") @Min(1) Long eventId,
                                            @RequestBody @Valid UpdateEventRequest updateEventAdminRequest) {
+
+        //Если меняется состояние события, то значения могут быть PUBLISH_EVENT or REJECT_EVENT
         StateActionEnum stateAction = updateEventAdminRequest.getStateAction();
         if (nonNull(stateAction) && !stateAction.equals(StateActionEnum.PUBLISH_EVENT) &&
                 !stateAction.equals(StateActionEnum.REJECT_EVENT)) {

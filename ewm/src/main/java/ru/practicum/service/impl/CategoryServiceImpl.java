@@ -1,6 +1,7 @@
 package ru.practicum.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +19,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class CategoryServiceImpl implements CategoryService {
     private final CategoryMapper categoryMapper;
     private final CategoryRepository categoryRepository;
@@ -34,11 +36,12 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public void deleteCategory(Long categoryId) {
-        Category category = categoryMapper.map(findCategoryById(categoryId));
+        Category category = categoryManager.findCategoryById(categoryId);
         //проверка, что у категории нет привязанных событий
-        //TODO проверить
         if (eventRepository.existsByCategoryId(categoryId)) {
-            throw new ConflictException("The category is not empty", "For the requested operation the conditions are not met.");
+            log.error("Attempt to delete category id = {}. The category id is not empty", category);
+            throw new ConflictException(String.format("The category id = %d is not empty",categoryId),
+                    "For the requested operation the conditions are not met.");
         }
         categoryRepository.delete(category);
     }
@@ -59,6 +62,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<CategoryDto> getAllCategories(Pageable pageable) {
         List<Category> categories = categoryRepository.findAll(pageable).getContent();
         return categoryMapper.map(categories);
@@ -69,6 +73,7 @@ public class CategoryServiceImpl implements CategoryService {
             throw new ConflictException("Constraint unique_category_name", "Integrity constraint has been violated.");
         }
     }
+
     private void existsByName(String categoryName) {
         if (categoryRepository.existsByName(categoryName)) {
             throw new ConflictException("Constraint unique_category_name", "Integrity constraint has been violated.");

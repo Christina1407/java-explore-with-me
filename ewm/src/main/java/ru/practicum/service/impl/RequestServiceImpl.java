@@ -7,7 +7,6 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.NotFoundException;
 import ru.practicum.manager.EventManager;
-import ru.practicum.manager.RequestManager;
 import ru.practicum.manager.UserManager;
 import ru.practicum.mapper.RequestMapper;
 import ru.practicum.model.Event;
@@ -29,7 +28,6 @@ import java.util.Objects;
 public class RequestServiceImpl implements RequestService {
     private final EventManager eventManager;
     private final UserManager userManager;
-    private final RequestManager requestManager;
     private final RequestMapper requestMapper;
     private final RequestRepository requestRepository;
 
@@ -89,7 +87,7 @@ public class RequestServiceImpl implements RequestService {
     @Override
     public ParticipationRequestDto cancelRequestByRequester(Long userId, Long requestId) {
         userManager.findUserById(userId);
-        Request requestForCancel = requestManager.findRequestById(requestId);
+        Request requestForCancel = findRequestById(requestId);
         checkRequester(userId, requestForCancel);
         requestForCancel.setStatus(StatusEnum.CANCELED);
         return requestMapper.map(requestForCancel);
@@ -100,6 +98,11 @@ public class RequestServiceImpl implements RequestService {
             log.error("Пользователь c id = {} не инициатор запроса id = {}.", userId, request.getId());
             throw new NotFoundException(String.format("Пользователь c id = %d не инициатор запроса id = %d.", userId, request.getId()));
         }
+    }
+
+    private Request findRequestById(Long requestId) {
+        return requestRepository.findById(requestId).orElseThrow(() ->
+                new NotFoundException(String.format("Request with id =  %d was not found", requestId)));
     }
 
 
