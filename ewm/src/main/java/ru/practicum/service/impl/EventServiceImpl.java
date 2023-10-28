@@ -1,10 +1,15 @@
 package ru.practicum.service.impl;
 
+import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.Predicate;
+import com.querydsl.core.types.dsl.NumberExpression;
+import com.querydsl.jpa.impl.JPAQuery;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import ru.practicum.StatClient;
 import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.NotFoundException;
@@ -24,6 +29,7 @@ import ru.practicum.repo.LocationRepository;
 import ru.practicum.repo.RequestRepository;
 import ru.practicum.service.EventService;
 
+import javax.persistence.EntityManager;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -32,6 +38,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
 @Service
@@ -49,6 +56,7 @@ public class EventServiceImpl implements EventService {
     private final LocationMapper locationMapper;
     private final StatClient statClient;
     private final RequestMapper requestMapper;
+    private final EntityManager entityManager;
 
     @Override
     public EventFullDto saveEvent(Long userId, NewEventDto newEventDto) {
@@ -57,7 +65,7 @@ public class EventServiceImpl implements EventService {
         Location location = locationRepository.save(locationMapper.map(newEventDto.getLocation()));
         Event eventForSave = eventMapper.map(newEventDto, category, location, user, StateEnum.PENDING);
         Event event = eventRepository.save(eventForSave);
-        return eventMapper.map(event); //TODO check mapper
+        return eventMapper.map(event);
     }
 
     @Override
@@ -94,8 +102,59 @@ public class EventServiceImpl implements EventService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<EventShortDto> getEvents(GetEventsRequestParams params, Pageable pageable) {
-        return null; //TODO QueryDSL
+    public List<EventShortDto> getEventsPublic(ParamsForPublic params, Pageable pageable) {
+        //В ответе должны быть только опубликованные события
+        //если в запросе не указан диапазон дат [rangeStart-rangeEnd], то нужно выгружать события, которые произойдут позже текущей даты и времени
+        //TODO информация о каждом событии должна включать в себя количество просмотров и количество уже одобренных заявок на участие
+        //TODO информацию о том, что по этому эндпоинту был осуществлен и обработан запрос, нужно сохранить в сервисе статистики
+        return eventMapper.mapToEventShortDtoList(eventRepository.findAll(getPredicateByParams(params), pageable).getContent()); //TODO QueryDSL
+    }
+
+    private Predicate getPredicateByParams(ParamsForPublic params) {
+        JPAQuery<?> query = new JPAQuery<Void>(entityManager);
+        BooleanBuilder where = new BooleanBuilder();
+        where.and(QEvent.event.state.eq(StateEnum.PUBLISHED));
+        if (nonNull(params.getText())) {
+            where.and(QEvent.event.annotation.containsIgnoreCase(params.getText())
+                    .or(QEvent.event.description.containsIgnoreCase(params.getText())));
+        }
+        if (!CollectionUtils.isEmpty(params.getCategories())) {
+            where.and(QEvent.event.category.id.in(params.getCategories()));
+        }
+        if (nonNull(params.getPaid())) {
+            where.and(QEvent.event.paid.eq(params.getPaid()));
+        }
+        if (isNull(params.getRangeStart()) && isNull(params.getRangeEnd())) {
+            where.and(QEvent.event.eventDate.goe(LocalDateTime.now()));
+        }
+        if (nonNull(params.getRangeStart()) && isNull(params.getRangeEnd())) {
+            where.and(QEvent.event.eventDate.goe(params.getRangeStart()));
+        }
+        if (nonNull(params.getRangeEnd()) && isNull(params.getRangeStart())) {
+            where.and(QEvent.event.eventDate.loe(params.getRangeEnd()));
+        }
+        if (nonNull(params.getRangeStart()) && nonNull(params.getRangeEnd())) {
+            where.and(QEvent.event.eventDate.between(params.getRangeStart(), params.getRangeEnd()));
+        }
+        if (params.isOnlyAvailable()) {
+            QRequest request = QRequest.request;
+            NumberExpression<Long> id = request.event.id.as("id");
+            NumberExpression<Integer> limit = request.event.participantLimit.as("limit");
+            NumberExpression<Long> confirmed = request.status.count().as("CONFIRMED");
+
+            //Получить все идентификаторы событий, у которых не исчерпан лимит запросов на участие
+            List<Long> eventId = query.select(id, limit, confirmed)
+                    .from(request)
+                    .where(request.status.eq(StatusEnum.CONFIRMED))
+                    .groupBy(id)
+                    .having(limit.gt(confirmed))
+                    .fetch()
+                    .stream()
+                    .map(tuple -> tuple.get(id))
+                    .collect(Collectors.toList());
+            where.and(QEvent.event.id.in(eventId));
+        }
+        return where;
     }
 
     @Override
@@ -139,7 +198,15 @@ public class EventServiceImpl implements EventService {
 
         eventManager.enrichEventsByViews(events);
         eventManager.enrichEventsByConfirmedRequests(events);
-        return eventMapper.map(events);
+        return eventMapper.mapToEventShortDtoList(events);
+    }
+
+    @Override
+    public List<EventFullDto> getEventsByAdmin(ParamsForAdmin params, Pageable pageable) {
+        List<Event> events = eventRepository.findAll(getPredicateByParamsForAdmin(params), pageable).getContent();
+        eventManager.enrichEventsByViews(events);
+        eventManager.enrichEventsByConfirmedRequests(events);
+        return eventMapper.mapToEventFullDtoList(events);
     }
 
     @Override
@@ -166,7 +233,7 @@ public class EventServiceImpl implements EventService {
             eventForUpdate.setState(StateEnum.CANCELED);
         }
 
-        //Если прилетел айдишник категории, проверяем, что есть такая категория
+        //Если прилетел айдишник категории, проверяем, что такая категория есть
         Category category = getCategory(updateEventAdminRequest);
 
         eventMapper.update(updateEventAdminRequest, category, eventForUpdate);
@@ -279,5 +346,31 @@ public class EventServiceImpl implements EventService {
             category = categoryManager.findCategoryById(updateEventRequest.getCategory());
         }
         return category;
+    }
+
+    private Predicate getPredicateByParamsForAdmin(ParamsForAdmin params) {
+        BooleanBuilder where = new BooleanBuilder();
+        if (!CollectionUtils.isEmpty(params.getUsers())) {
+            where.and(QEvent.event.initiator.id.in(params.getUsers()));
+        }
+        if (!CollectionUtils.isEmpty(params.getStates())) {
+            where.and(QEvent.event.state.in(params.getStates()));
+        }
+        if (!CollectionUtils.isEmpty(params.getCategories())) {
+            where.and(QEvent.event.category.id.in(params.getCategories()));
+        }
+        if (isNull(params.getRangeStart()) && isNull(params.getRangeEnd())) {
+            where.and(QEvent.event.eventDate.goe(LocalDateTime.now()));
+        }
+        if (nonNull(params.getRangeStart()) && isNull(params.getRangeEnd())) {
+            where.and(QEvent.event.eventDate.goe(params.getRangeStart()));
+        }
+        if (nonNull(params.getRangeEnd()) && isNull(params.getRangeStart())) {
+            where.and(QEvent.event.eventDate.loe(params.getRangeEnd()));
+        }
+        if (nonNull(params.getRangeStart()) && nonNull(params.getRangeEnd())) {
+            where.and(QEvent.event.eventDate.between(params.getRangeStart(), params.getRangeEnd()));
+        }
+        return where;
     }
 }

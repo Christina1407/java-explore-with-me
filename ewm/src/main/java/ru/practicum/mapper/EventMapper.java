@@ -28,5 +28,7 @@ public interface EventMapper {
     void update(UpdateEventRequest updateEventRequest, Category existCategory, @MappingTarget Event event);
     EventRequestStatusUpdateResult map(List<Request> confirmedRequests, List<Request> rejectedRequests);
 
-    List<EventShortDto> map(List<Event> events);
+    List<EventShortDto> mapToEventShortDtoList(List<Event> events);
+
+    List<EventFullDto> mapToEventFullDtoList(List<Event> events);
 }

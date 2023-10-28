@@ -37,6 +37,7 @@ create table if not exists events
     request_moderation boolean default true,
     title varchar(120) not null CHECK (char_length(title) >= 3),
     state varchar(20) not null,
+--    confirmed_requests int,
     constraint fk_events_category_id
                foreign key (category_id)
                references categories (category_id),

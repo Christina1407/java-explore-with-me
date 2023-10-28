@@ -63,6 +63,7 @@ public class Event {
     List<Compilation> compilations;
     @Transient
     private Long views;
+//    @Column(name = "confirmed_requests")
     @Transient
     private Long confirmedRequests;
 }

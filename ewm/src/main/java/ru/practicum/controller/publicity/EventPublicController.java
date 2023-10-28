@@ -4,11 +4,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.model.dto.EventFullDto;
 import ru.practicum.model.dto.EventShortDto;
-import ru.practicum.model.dto.GetEventsRequestParams;
+import ru.practicum.model.dto.ParamsForPublic;
+import ru.practicum.model.enums.SortEnum;
 import ru.practicum.service.EventService;
 
 import javax.servlet.http.HttpServletRequest;
@@ -25,11 +27,13 @@ public class EventPublicController {
     private final EventService eventService;
 
     @GetMapping
-    public List<EventShortDto> getEvents(@Valid GetEventsRequestParams params,
-                                         @RequestParam(name = "from", defaultValue = "0") @Min(0) int from,
-                                         @RequestParam(name = "size", defaultValue = "10") @Min(1) int size) {
-        Pageable pageable = PageRequest.of(from / size, size);
-        return eventService.getEvents(params, pageable);
+    public List<EventShortDto> getEventsPublic(@Valid ParamsForPublic params,
+                                               @RequestParam(name = "from", defaultValue = "0") @Min(0) int from,
+                                               @RequestParam(name = "size", defaultValue = "10") @Min(1) int size,
+                                               @RequestParam(name = "sort", defaultValue = "EVENT_DATE") SortEnum sort) {
+        //TODO
+        Pageable pageable = PageRequest.of(from / size, size, Sort.by(Sort.Direction.DESC, "eventDate"));
+        return eventService.getEventsPublic(params, pageable);
     }
 
     @GetMapping("/{eventId}")
