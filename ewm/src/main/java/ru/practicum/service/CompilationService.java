@@ -3,6 +3,7 @@ package ru.practicum.service;
 import org.springframework.data.domain.Pageable;
 import ru.practicum.model.dto.CompilationDto;
 import ru.practicum.model.dto.NewCompilationDto;
+import ru.practicum.model.dto.UpdateCompilationRequest;
 
 import java.util.List;
 
@@ -14,4 +15,6 @@ public interface CompilationService {
     CompilationDto findCompilationById(Long compilationId);
 
     List<CompilationDto> findCompilations(Boolean pinned, Pageable pageable);
+
+    CompilationDto updateCompilationByAdmin(Long compilationId, UpdateCompilationRequest updateCompilationRequest);
 }

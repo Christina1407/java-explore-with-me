@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @EntityListeners(AuditingEntityListener.class)
-public class Request {
+public class ParticipationRequest {
     @Id
     @Column(name = "request_id", nullable = false)
     @GeneratedValue(strategy = GenerationType.IDENTITY)

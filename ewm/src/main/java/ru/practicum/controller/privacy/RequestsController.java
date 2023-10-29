@@ -29,7 +29,7 @@ public class RequestsController {
 
     @GetMapping
     public List<ParticipationRequestDto> findRequests(@PathVariable @Min(1) Long userId) {
-        log.info("Get my requests by user id = {}", userId);
+        log.info("Get requests by user id = {}", userId);
         return requestService.findRequests(userId);
     }
 

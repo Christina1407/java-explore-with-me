@@ -7,6 +7,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.model.dto.CompilationDto;
 import ru.practicum.model.dto.NewCompilationDto;
+import ru.practicum.model.dto.UpdateCompilationRequest;
 import ru.practicum.service.CompilationService;
 
 import javax.validation.Valid;
@@ -32,5 +33,13 @@ public class CompilationAdminController {
     public void deleteCompilation(@PathVariable("compilationId") @Min(1) Long compilationId) {
         log.info("Попытка удаления подборки id = {}", compilationId);
         compilationService.deleteCompilation(compilationId);
+    }
+
+    @PatchMapping("{compilationId}")
+    public CompilationDto updateCompilationByAdmin(@PathVariable("compilationId") @Min(1) Long compilationId,
+                                                   @RequestBody @Valid UpdateCompilationRequest updateCompilationRequest) {
+
+        log.info("Обновление информации о подборке id = {} администратором updateCompilationRequest = {}", compilationId, updateCompilationRequest);
+        return compilationService.updateCompilationByAdmin(compilationId, updateCompilationRequest);
     }
 }

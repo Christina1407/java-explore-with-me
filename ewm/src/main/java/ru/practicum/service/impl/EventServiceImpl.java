@@ -103,59 +103,15 @@ public class EventServiceImpl implements EventService {
     @Override
     @Transactional(readOnly = true)
     public List<EventShortDto> getEventsPublic(ParamsForPublic params, Pageable pageable) {
-        //В ответе должны быть только опубликованные события
-        //если в запросе не указан диапазон дат [rangeStart-rangeEnd], то нужно выгружать события, которые произойдут позже текущей даты и времени
         //TODO информация о каждом событии должна включать в себя количество просмотров и количество уже одобренных заявок на участие
         //TODO информацию о том, что по этому эндпоинту был осуществлен и обработан запрос, нужно сохранить в сервисе статистики
-        return eventMapper.mapToEventShortDtoList(eventRepository.findAll(getPredicateByParams(params), pageable).getContent()); //TODO QueryDSL
+
+        List<Event> events = eventRepository.findAll(getPredicateByParamsForPublic(params), pageable).getContent();
+        eventManager.enrichEventsByViews(events);
+        eventManager.enrichEventsByConfirmedRequests(events);
+        return eventMapper.mapToEventShortDtoList(events);
     }
 
-    private Predicate getPredicateByParams(ParamsForPublic params) {
-        JPAQuery<?> query = new JPAQuery<Void>(entityManager);
-        BooleanBuilder where = new BooleanBuilder();
-        where.and(QEvent.event.state.eq(StateEnum.PUBLISHED));
-        if (nonNull(params.getText())) {
-            where.and(QEvent.event.annotation.containsIgnoreCase(params.getText())
-                    .or(QEvent.event.description.containsIgnoreCase(params.getText())));
-        }
-        if (!CollectionUtils.isEmpty(params.getCategories())) {
-            where.and(QEvent.event.category.id.in(params.getCategories()));
-        }
-        if (nonNull(params.getPaid())) {
-            where.and(QEvent.event.paid.eq(params.getPaid()));
-        }
-        if (isNull(params.getRangeStart()) && isNull(params.getRangeEnd())) {
-            where.and(QEvent.event.eventDate.goe(LocalDateTime.now()));
-        }
-        if (nonNull(params.getRangeStart()) && isNull(params.getRangeEnd())) {
-            where.and(QEvent.event.eventDate.goe(params.getRangeStart()));
-        }
-        if (nonNull(params.getRangeEnd()) && isNull(params.getRangeStart())) {
-            where.and(QEvent.event.eventDate.loe(params.getRangeEnd()));
-        }
-        if (nonNull(params.getRangeStart()) && nonNull(params.getRangeEnd())) {
-            where.and(QEvent.event.eventDate.between(params.getRangeStart(), params.getRangeEnd()));
-        }
-        if (params.isOnlyAvailable()) {
-            QRequest request = QRequest.request;
-            NumberExpression<Long> id = request.event.id.as("id");
-            NumberExpression<Integer> limit = request.event.participantLimit.as("limit");
-            NumberExpression<Long> confirmed = request.status.count().as("CONFIRMED");
-
-            //Получить все идентификаторы событий, у которых не исчерпан лимит запросов на участие
-            List<Long> eventId = query.select(id, limit, confirmed)
-                    .from(request)
-                    .where(request.status.eq(StatusEnum.CONFIRMED))
-                    .groupBy(id)
-                    .having(limit.gt(confirmed))
-                    .fetch()
-                    .stream()
-                    .map(tuple -> tuple.get(id))
-                    .collect(Collectors.toList());
-            where.and(QEvent.event.id.in(eventId));
-        }
-        return where;
-    }
 
     @Override
     public EventFullDto updateEventByInitiator(Long userId, Long eventId, UpdateEventRequest updateEventUserRequest) {
@@ -248,10 +204,10 @@ public class EventServiceImpl implements EventService {
         checkInitiator(userId, event);
 
         //Проверяем все ли айдишники запросов на участие из eventRequestStatusUpdateRequest относятся к событию eventId
-        List<Request> eventsRequests = event.getRequests();
+        List<ParticipationRequest> eventsRequests = event.getRequests();
         List<Long> requestIds = eventRequestStatusUpdateRequest.getRequestIds();
         //Лист реквестов из запроса, которые созданы к событию
-        List<Request> checkedRequests = eventsRequests.stream()
+        List<ParticipationRequest> checkedRequests = eventsRequests.stream()
                 .filter(request -> requestIds.contains(request.getId()))
                 .sorted(Comparator.comparing(request -> requestIds.indexOf(request.getId())))
                 .collect(Collectors.toList());
@@ -286,8 +242,8 @@ public class EventServiceImpl implements EventService {
         checkedRequests.forEach(
                 request -> request.setStatus(StatusEnum.REJECTED)
         );
-        List<Request> confirmedRequests = new ArrayList<>();
-        List<Request> rejectedRequests = new ArrayList<>();
+        List<ParticipationRequest> confirmedRequests = new ArrayList<>();
+        List<ParticipationRequest> rejectedRequests = new ArrayList<>();
 
         if (eventRequestStatusUpdateRequest.getStatus().equals(StatusEnum.REJECTED)) {
             rejectedRequests.addAll(checkedRequests);
@@ -348,19 +304,10 @@ public class EventServiceImpl implements EventService {
         return category;
     }
 
-    private Predicate getPredicateByParamsForAdmin(ParamsForAdmin params) {
-        BooleanBuilder where = new BooleanBuilder();
-        if (!CollectionUtils.isEmpty(params.getUsers())) {
-            where.and(QEvent.event.initiator.id.in(params.getUsers()));
-        }
-        if (!CollectionUtils.isEmpty(params.getStates())) {
-            where.and(QEvent.event.state.in(params.getStates()));
-        }
+    //общая часть админ и паблик
+    private void getPredicateByParams(GetEventsRequestParam params, BooleanBuilder where) {
         if (!CollectionUtils.isEmpty(params.getCategories())) {
             where.and(QEvent.event.category.id.in(params.getCategories()));
-        }
-        if (isNull(params.getRangeStart()) && isNull(params.getRangeEnd())) {
-            where.and(QEvent.event.eventDate.goe(LocalDateTime.now()));
         }
         if (nonNull(params.getRangeStart()) && isNull(params.getRangeEnd())) {
             where.and(QEvent.event.eventDate.goe(params.getRangeStart()));
@@ -370,6 +317,56 @@ public class EventServiceImpl implements EventService {
         }
         if (nonNull(params.getRangeStart()) && nonNull(params.getRangeEnd())) {
             where.and(QEvent.event.eventDate.between(params.getRangeStart(), params.getRangeEnd()));
+        }
+    }
+
+    private Predicate getPredicateByParamsForAdmin(ParamsForAdmin params) {
+        BooleanBuilder where = new BooleanBuilder();
+        getPredicateByParams(params, where);
+        if (!CollectionUtils.isEmpty(params.getUsers())) {
+            where.and(QEvent.event.initiator.id.in(params.getUsers()));
+        }
+        if (!CollectionUtils.isEmpty(params.getStates())) {
+            where.and(QEvent.event.state.in(params.getStates()));
+        }
+        return where;
+    }
+
+    private Predicate getPredicateByParamsForPublic(ParamsForPublic params) {
+        JPAQuery<?> query = new JPAQuery<Void>(entityManager);
+        BooleanBuilder where = new BooleanBuilder();
+        getPredicateByParams(params, where);
+        //В ответе должны быть только опубликованные события
+        where.and(QEvent.event.state.eq(StateEnum.PUBLISHED));
+        if (nonNull(params.getText())) {
+            where.and(QEvent.event.annotation.containsIgnoreCase(params.getText())
+                    .or(QEvent.event.description.containsIgnoreCase(params.getText())));
+        }
+        if (nonNull(params.getPaid())) {
+            where.and(QEvent.event.paid.eq(params.getPaid()));
+        }
+        //если в запросе не указан диапазон дат [rangeStart-rangeEnd], то нужно выгружать события, которые произойдут позже текущей даты и времени
+        if (isNull(params.getRangeStart()) && isNull(params.getRangeEnd())) {
+            where.and(QEvent.event.eventDate.goe(LocalDateTime.now()));
+        }
+        //только события у которых не исчерпан лимит запросов на участие
+        if (params.isOnlyAvailable()) {
+            QRequest request = QRequest.request;
+            NumberExpression<Long> id = request.event.id;
+            NumberExpression<Integer> limit = request.event.participantLimit;
+            NumberExpression<Long> confirmed = request.status.eq(StatusEnum.CONFIRMED).count();
+
+            //Получить все идентификаторы событий, у которых лимит участников больше кол-ва подтверждённых заявок
+            List<Long> eventId = query.select(id, limit, confirmed)
+                    .from(request)
+                    .groupBy(id)
+                    .having(limit.gt(confirmed))
+                    .fetch()
+                    .stream()
+                    .map(tuple -> tuple.get(id))
+                    .collect(Collectors.toList());
+            //также подходят события с participantLimit = 0 и события, у которых нет заявок на участие
+            where.and(QEvent.event.id.in(eventId).or(QEvent.event.participantLimit.eq(0))).or(QEvent.event.requests.size().eq(0));
         }
         return where;
     }

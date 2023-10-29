@@ -12,6 +12,7 @@ import ru.practicum.model.Compilation;
 import ru.practicum.model.Event;
 import ru.practicum.model.dto.CompilationDto;
 import ru.practicum.model.dto.NewCompilationDto;
+import ru.practicum.model.dto.UpdateCompilationRequest;
 import ru.practicum.repo.CompilationRepository;
 import ru.practicum.service.CompilationService;
 
@@ -59,6 +60,7 @@ public class CompilationServiceImpl implements CompilationService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public CompilationDto findCompilationById(Long compilationId) {
         Compilation compilation = getCompilation(compilationId);
         List<Event> events = compilation.getEvents();
@@ -82,9 +84,33 @@ public class CompilationServiceImpl implements CompilationService {
         return compilationMapper.map(compilations);
     }
 
+    @Override
+    public CompilationDto updateCompilationByAdmin(Long compilationId, UpdateCompilationRequest updateCompilationRequest) {
+        Compilation compilation = getCompilation(compilationId);
+        List<Event> events;
+        Set<Long> eventsIds = updateCompilationRequest.getEvents();
+
+        //Если поле в запросе не указано (равно null) - значит изменение этих данных не требуется. Подборка может не содержать событий
+        if (isNull(eventsIds)) {
+            events = compilation.getEvents();
+        } else if (eventsIds.isEmpty()) {
+            events = new ArrayList<>();
+        } else {
+            events = eventManager.findAllById(eventsIds);
+            if (events.size() != eventsIds.size()) {
+                log.error("Check ids of events = {}", eventsIds);
+                throw new NotFoundException(String.format("Check ids of events = %s.", eventsIds));
+            }
+        }
+        //Если в подборке есть опубликованные события, к ним добавляем просмотры и заявки
+        eventManager.enrichEventsByViews(events);
+        eventManager.enrichEventsByConfirmedRequests(events);
+        compilationMapper.update(updateCompilationRequest, events, compilation);
+        return compilationMapper.map(compilation);
+    }
+
     private Compilation getCompilation(Long compilationId) {
         return compilationRepository.findById(compilationId)
                 .orElseThrow(() -> new NotFoundException(String.format("Compilation with id = %d was not found", compilationId)));
     }
-
 }

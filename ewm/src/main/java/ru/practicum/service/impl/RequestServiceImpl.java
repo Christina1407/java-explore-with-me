@@ -10,7 +10,7 @@ import ru.practicum.manager.EventManager;
 import ru.practicum.manager.UserManager;
 import ru.practicum.mapper.RequestMapper;
 import ru.practicum.model.Event;
-import ru.practicum.model.Request;
+import ru.practicum.model.ParticipationRequest;
 import ru.practicum.model.User;
 import ru.practicum.model.dto.ParticipationRequestDto;
 import ru.practicum.model.enums.StateEnum;
@@ -35,7 +35,7 @@ public class RequestServiceImpl implements RequestService {
     public ParticipationRequestDto saveRequest(Long userId, Long eventId) {
         User requester = userManager.findUserById(userId);
         Event event = eventManager.findEventById(eventId);
-        Request requestForSave;
+        ParticipationRequest requestForSave;
 
         //Инициатор события не может добавить запрос на участие в своём событии
         if (Objects.equals(event.getInitiator().getId(), userId)) {
@@ -79,6 +79,7 @@ public class RequestServiceImpl implements RequestService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ParticipationRequestDto> findRequests(Long userId) {
         userManager.findUserById(userId);
         return requestMapper.map(requestRepository.findByRequesterId(userId));
@@ -87,20 +88,20 @@ public class RequestServiceImpl implements RequestService {
     @Override
     public ParticipationRequestDto cancelRequestByRequester(Long userId, Long requestId) {
         userManager.findUserById(userId);
-        Request requestForCancel = findRequestById(requestId);
+        ParticipationRequest requestForCancel = findRequestById(requestId);
         checkRequester(userId, requestForCancel);
         requestForCancel.setStatus(StatusEnum.CANCELED);
         return requestMapper.map(requestForCancel);
     }
 
-    private void checkRequester(Long userId, Request request) {
+    private void checkRequester(Long userId, ParticipationRequest request) {
         if (!Objects.equals(request.getRequester().getId(), userId)) {
             log.error("Пользователь c id = {} не инициатор запроса id = {}.", userId, request.getId());
             throw new NotFoundException(String.format("Пользователь c id = %d не инициатор запроса id = %d.", userId, request.getId()));
         }
     }
 
-    private Request findRequestById(Long requestId) {
+    private ParticipationRequest findRequestById(Long requestId) {
         return requestRepository.findById(requestId).orElseThrow(() ->
                 new NotFoundException(String.format("Request with id =  %d was not found", requestId)));
     }

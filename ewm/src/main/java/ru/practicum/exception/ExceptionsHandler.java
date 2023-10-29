@@ -2,6 +2,7 @@ package ru.practicum.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.validation.BindException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -54,7 +55,7 @@ public class ExceptionsHandler {
     }
 
     @ExceptionHandler({ConstraintViolationException.class, MethodArgumentTypeMismatchException.class,
-            MissingServletRequestParameterException.class, HttpMessageNotReadableException.class})
+            MissingServletRequestParameterException.class, HttpMessageNotReadableException.class, BindException.class})
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiError handleBadRequestException(final Exception e) {
         return new ApiError(HttpStatus.BAD_REQUEST.name(), "Incorrectly made request.", e.getMessage(), LocalDateTime.now() );

@@ -31,8 +31,8 @@ public class EventPublicController {
                                                @RequestParam(name = "from", defaultValue = "0") @Min(0) int from,
                                                @RequestParam(name = "size", defaultValue = "10") @Min(1) int size,
                                                @RequestParam(name = "sort", defaultValue = "EVENT_DATE") SortEnum sort) {
-        //TODO
-        Pageable pageable = PageRequest.of(from / size, size, Sort.by(Sort.Direction.DESC, "eventDate"));
+
+        Pageable pageable = PageRequest.of(from / size, size, Sort.by(Sort.Direction.ASC, sort.getName()));
         return eventService.getEventsPublic(params, pageable);
     }
 

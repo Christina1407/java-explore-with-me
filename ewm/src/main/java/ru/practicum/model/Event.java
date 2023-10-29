@@ -54,7 +54,7 @@ public class Event {
     @Enumerated(EnumType.STRING)
     private StateEnum state;
     @OneToMany(mappedBy = "event")
-    private List<Request> requests;
+    private List<ParticipationRequest> requests;
     @ManyToMany
     @JoinTable(
             name = "events_compilations",
@@ -63,7 +63,6 @@ public class Event {
     List<Compilation> compilations;
     @Transient
     private Long views;
-//    @Column(name = "confirmed_requests")
     @Transient
     private Long confirmedRequests;
 }
