@@ -102,7 +102,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<EventShortDto> getEventsPublic(ParamsForPublic params, Pageable pageable) {
+    public List<EventShortDto> findEventsPublic(ParamsForPublic params, Pageable pageable) {
         //TODO информация о каждом событии должна включать в себя количество просмотров и количество уже одобренных заявок на участие
         //TODO информацию о том, что по этому эндпоинту был осуществлен и обработан запрос, нужно сохранить в сервисе статистики
 
@@ -111,7 +111,6 @@ public class EventServiceImpl implements EventService {
         eventManager.enrichEventsByConfirmedRequests(events);
         return eventMapper.mapToEventShortDtoList(events);
     }
-
 
     @Override
     public EventFullDto updateEventByInitiator(Long userId, Long eventId, UpdateEventRequest updateEventUserRequest) {
@@ -158,7 +157,7 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public List<EventFullDto> getEventsByAdmin(ParamsForAdmin params, Pageable pageable) {
+    public List<EventFullDto> findEventsByAdmin(ParamsForAdmin params, Pageable pageable) {
         List<Event> events = eventRepository.findAll(getPredicateByParamsForAdmin(params), pageable).getContent();
         eventManager.enrichEventsByViews(events);
         eventManager.enrichEventsByConfirmedRequests(events);
@@ -204,10 +203,10 @@ public class EventServiceImpl implements EventService {
         checkInitiator(userId, event);
 
         //Проверяем все ли айдишники запросов на участие из eventRequestStatusUpdateRequest относятся к событию eventId
-        List<ParticipationRequest> eventsRequests = event.getRequests();
+        List<Request> eventsRequests = event.getRequests();
         List<Long> requestIds = eventRequestStatusUpdateRequest.getRequestIds();
         //Лист реквестов из запроса, которые созданы к событию
-        List<ParticipationRequest> checkedRequests = eventsRequests.stream()
+        List<Request> checkedRequests = eventsRequests.stream()
                 .filter(request -> requestIds.contains(request.getId()))
                 .sorted(Comparator.comparing(request -> requestIds.indexOf(request.getId())))
                 .collect(Collectors.toList());
@@ -238,12 +237,12 @@ public class EventServiceImpl implements EventService {
                     "For the requested operation the conditions are not met.");
         }
 
-        //Если при подтверждении заявки, лимит заявок для события исчерпан, то все неподтверждённые заявки(из запроса) отклоняются
+        //Если при подтверждении заявки, лимит заявок для события исчерпан, то все неподтверждённые заявки из запроса отклоняются
         checkedRequests.forEach(
                 request -> request.setStatus(StatusEnum.REJECTED)
         );
-        List<ParticipationRequest> confirmedRequests = new ArrayList<>();
-        List<ParticipationRequest> rejectedRequests = new ArrayList<>();
+        List<Request> confirmedRequests = new ArrayList<>();
+        List<Request> rejectedRequests = new ArrayList<>();
 
         if (eventRequestStatusUpdateRequest.getStatus().equals(StatusEnum.REJECTED)) {
             rejectedRequests.addAll(checkedRequests);
@@ -349,24 +348,31 @@ public class EventServiceImpl implements EventService {
         if (isNull(params.getRangeStart()) && isNull(params.getRangeEnd())) {
             where.and(QEvent.event.eventDate.goe(LocalDateTime.now()));
         }
-        //только события у которых не исчерпан лимит запросов на участие
+        /*
+        Только события, у которых не исчерпан лимит запросов на участие:
+        1) participantLimit = 0;
+        2) нет заявок на участие;
+        4) нет подтверждённых заявок на участие;
+        3) лимит больше кол-ва подтверждённых заявок.
+         */
         if (params.isOnlyAvailable()) {
             QRequest request = QRequest.request;
             NumberExpression<Long> id = request.event.id;
             NumberExpression<Integer> limit = request.event.participantLimit;
-            NumberExpression<Long> confirmed = request.status.eq(StatusEnum.CONFIRMED).count();
+            NumberExpression<Long> confirmed = request.count();
 
-            //Получить все идентификаторы событий, у которых лимит участников больше кол-ва подтверждённых заявок
+            //Получить все идентификаторы событий, у которых есть подтверждённые и их кол-во == лимиту участников
             List<Long> eventId = query.select(id, limit, confirmed)
                     .from(request)
+                    .where(request.status.eq(StatusEnum.CONFIRMED))
                     .groupBy(id)
-                    .having(limit.gt(confirmed))
+                    .having(limit.eq(confirmed.intValue()))
                     .fetch()
                     .stream()
                     .map(tuple -> tuple.get(id))
                     .collect(Collectors.toList());
-            //также подходят события с participantLimit = 0 и события, у которых нет заявок на участие
-            where.and(QEvent.event.id.in(eventId).or(QEvent.event.participantLimit.eq(0))).or(QEvent.event.requests.size().eq(0));
+            //нам подходят все остальные
+            where.and(QEvent.event.id.notIn(eventId));
         }
         return where;
     }

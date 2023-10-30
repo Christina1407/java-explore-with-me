@@ -55,7 +55,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public CategoryDto updateCategory(CategoryDto categoryDto, Long categoryId) {
         Category categoryForUpdate = categoryManager.findCategoryById(categoryId);
-        //проверяем, что нового названия нет в базе. Исключаем id обновляемой категории для случая обновления с неизменёнными данными
+        //Проверяем, что нового названия нет в базе. Исключаем id обновляемой категории для случая обновления с неизменёнными данными
         existsByNameAndCategoryIdNot(categoryDto.getName(), categoryId);
         categoryForUpdate.setName(categoryDto.getName());
         return categoryMapper.map(categoryForUpdate);

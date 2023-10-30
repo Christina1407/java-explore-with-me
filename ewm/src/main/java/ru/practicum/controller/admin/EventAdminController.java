@@ -44,12 +44,12 @@ public class EventAdminController {
     }
 
     @GetMapping
-    public List<EventFullDto> getEventsByAdmin(@Valid ParamsForAdmin params,
+    public List<EventFullDto> findEventsByAdmin(@Valid ParamsForAdmin params,
                                                @RequestParam(name = "from", defaultValue = "0") @Min(0) int from,
                                                @RequestParam(name = "size", defaultValue = "10") @Min(1) int size) {
 
         log.info("Получение администратором данных по параметрам = {}", params);
         Pageable pageable = PageRequest.of(from / size, size, Sort.by(Sort.Direction.ASC, "id"));
-        return eventService.getEventsByAdmin(params, pageable);
+        return eventService.findEventsByAdmin(params, pageable);
     }
 }

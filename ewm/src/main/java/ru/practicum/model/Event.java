@@ -54,7 +54,7 @@ public class Event {
     @Enumerated(EnumType.STRING)
     private StateEnum state;
     @OneToMany(mappedBy = "event")
-    private List<ParticipationRequest> requests;
+    private List<Request> requests;
     @ManyToMany
     @JoinTable(
             name = "events_compilations",

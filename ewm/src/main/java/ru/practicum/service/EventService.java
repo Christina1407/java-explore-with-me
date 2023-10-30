@@ -13,7 +13,7 @@ public interface EventService {
 
     EventFullDto findEventByIdPublic(Long eventId, String ip, String requestURI);
 
-    List<EventShortDto> getEventsPublic(ParamsForPublic params, Pageable pageable);
+    List<EventShortDto> findEventsPublic(ParamsForPublic params, Pageable pageable);
 
     EventFullDto updateEventByAdmin(Long eventId, UpdateEventRequest updateEventAdminRequest);
 
@@ -25,5 +25,5 @@ public interface EventService {
 
     List<EventShortDto> findInitiatorEvents(Long userId, Pageable pageable);
 
-    List<EventFullDto> getEventsByAdmin(ParamsForAdmin params, Pageable pageable);
+    List<EventFullDto> findEventsByAdmin(ParamsForAdmin params, Pageable pageable);
 }

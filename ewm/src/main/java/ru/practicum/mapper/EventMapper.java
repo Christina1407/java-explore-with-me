@@ -26,7 +26,7 @@ public interface EventMapper {
     @Mapping(target = "category", source = "existCategory")
     @Mapping(target = "id", ignore = true)
     void update(UpdateEventRequest updateEventRequest, Category existCategory, @MappingTarget Event event);
-    EventRequestStatusUpdateResult map(List<ParticipationRequest> confirmedRequests, List<ParticipationRequest> rejectedRequests);
+    EventRequestStatusUpdateResult map(List<Request> confirmedRequests, List<Request> rejectedRequests);
 
     List<EventShortDto> mapToEventShortDtoList(List<Event> events);
 

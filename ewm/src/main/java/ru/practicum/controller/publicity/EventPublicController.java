@@ -27,13 +27,13 @@ public class EventPublicController {
     private final EventService eventService;
 
     @GetMapping
-    public List<EventShortDto> getEventsPublic(@Valid ParamsForPublic params,
+    public List<EventShortDto> findEventsPublic(@Valid ParamsForPublic params,
                                                @RequestParam(name = "from", defaultValue = "0") @Min(0) int from,
                                                @RequestParam(name = "size", defaultValue = "10") @Min(1) int size,
                                                @RequestParam(name = "sort", defaultValue = "EVENT_DATE") SortEnum sort) {
 
         Pageable pageable = PageRequest.of(from / size, size, Sort.by(Sort.Direction.ASC, sort.getName()));
-        return eventService.getEventsPublic(params, pageable);
+        return eventService.findEventsPublic(params, pageable);
     }
 
     @GetMapping("/{eventId}")
