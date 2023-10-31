@@ -1,449 +1,102 @@
 package ru.practicum.service.impl;
 
-import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.test.annotation.DirtiesContext;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import ru.practicum.StatClient;
-import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.NotFoundException;
+import ru.practicum.manager.CategoryManager;
+import ru.practicum.manager.EventManager;
 import ru.practicum.manager.UserManager;
-import ru.practicum.model.*;
-import ru.practicum.model.dto.*;
-import ru.practicum.model.enums.SortEnum;
+import ru.practicum.mapper.EventMapper;
+import ru.practicum.mapper.LocationMapper;
+import ru.practicum.mapper.RequestMapper;
+import ru.practicum.model.Event;
+import ru.practicum.model.User;
+import ru.practicum.model.dto.EventFullDto;
+import ru.practicum.model.dto.UpdateEventRequest;
+import ru.practicum.model.enums.StateActionEnum;
 import ru.practicum.model.enums.StateEnum;
-import ru.practicum.model.enums.StatusEnum;
-import ru.practicum.repo.*;
+import ru.practicum.repo.EventRepository;
+import ru.practicum.repo.LocationRepository;
+import ru.practicum.repo.RequestRepository;
 import ru.practicum.service.EventService;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import javax.persistence.EntityManager;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 
-@SpringBootTest
-@AutoConfigureTestDatabase
-@RequiredArgsConstructor(onConstructor_ = @Autowired)
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
-public class EventServiceImplTest {
-
-    @Autowired
-    private EventService eventService;
-    @Autowired
+@ExtendWith(MockitoExtension.class)
+class EventServiceImplTest {
+    @Mock
     private UserManager userManager;
-    @Autowired
+    @Mock
+    private EventManager eventManager;
+    @Mock
     private EventRepository eventRepository;
-    @Autowired
+    @Mock
     private RequestRepository requestRepository;
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private CategoryRepository categoryRepository;
-    @Autowired
+    @Mock
+    private EventMapper eventMapper;
+    @Mock
+    private CategoryManager categoryManager;
+    @Mock
     private LocationRepository locationRepository;
-    @MockBean
+    @Mock
+    private LocationMapper locationMapper;
+    @Mock
     private StatClient statClient;
+    @Mock
+    private RequestMapper requestMapper;
+    @Mock
+    private EntityManager entityManager;
+    @Captor
+    ArgumentCaptor<Event> eventCaptor;
+    private EventService eventService;
     private Event event;
-    private User initiator;
-    private Category category;
-    private Location location;
 
     @BeforeEach
     void setUp() {
-        initiator = new User(null, "test@test.com", "Test Testov");
-        initiator = userRepository.save(initiator);
-        category = new Category(null, "test");
-        category = categoryRepository.save(category);
-        location = new Location(null, -85.1388F, 81.6359F);
-        location = locationRepository.save(location);
+        eventService = new EventServiceImpl(userManager, eventManager, eventRepository, requestRepository,
+                eventMapper, categoryManager, locationRepository, locationMapper, statClient, requestMapper, entityManager);
         event = Event.builder()
-                .annotation("Annotation teeeeeeest")
-                .category(category)
-                .description("Description teeeeeeest")
-                .eventDate(LocalDateTime.now().plusDays(5))
-                .initiator(initiator)
-                .location(location)
-                .paid(true)
-                .participantLimit(0)
-                .requestModeration(true)
-                .title("title")
-                .state(StateEnum.PENDING)
+                .initiator(User.builder().id(1L).build())
                 .build();
-        event = eventRepository.save(event);
     }
 
     @Test
-    void findEventByIdPublicNotPublished() {
+    void findInitiatorEventById() {
         //before
+        when(eventManager.findEventById(eq(2L))).thenReturn(event);
+        //when
+        EventFullDto result = eventService.findInitiatorEventById(1L, 2L);
         //then
-        assertThatThrownBy(() -> eventService.findEventByIdPublic(event.getId(), "121.0.0.1", "event/" + event.getId()))
+        assertThat(result).isNull();
+
+        // Получение события не инициатором
+        //before
+        event.getInitiator().setId(2L);
+        //when
+        assertThatThrownBy(() -> eventService.findInitiatorEventById(1L, 2L))
                 .isInstanceOf(NotFoundException.class);
     }
 
     @Test
-    void updateEventByNotInitiator() {
+    void updateEventByInitiator() {
         //before
-        User user = new User(null, "test1@test.com", "Not Initiator");
-        user = userRepository.save(user);
-        UpdateEventRequest updateEventRequest = UpdateEventRequest.builder().build();
-        //then
-        User finalUser = user;
-        assertThatThrownBy(() -> eventService.updateEventByInitiator(finalUser.getId(), event.getId(), updateEventRequest))
-                .isInstanceOf(NotFoundException.class);
-    }
-
-    @Test
-    void updateNotPendingEventByAdmin() {
-        //before
-        event.setState(StateEnum.CANCELED);
-        event = eventRepository.save(event);
-
-        UpdateEventRequest updateEventRequest = UpdateEventRequest.builder().build();
-        //then
-        assertThatThrownBy(() -> eventService.updateEventByAdmin(event.getId(), updateEventRequest))
-                .isInstanceOf(ConflictException.class);
-    }
-
-    @Test
-    void updateEventByInitiatorEventDateFail() {
-        //before
-        UpdateEventRequest updateEventRequest = UpdateEventRequest.builder()
-                .eventDate(LocalDateTime.now().plusHours(1))
-                .build();
-        //then
-        assertThatThrownBy(() -> eventService.updateEventByInitiator(initiator.getId(), event.getId(), updateEventRequest))
-                .isInstanceOf(ConflictException.class);
-    }
-
-    @Test
-    void findEventsPublicPaid() {
-        //before
-        Event publishedEvent1 = Event.builder()
-                .annotation("Palaeoanthropologist")
-                .category(category)
-                .description("Indistinguishability")
-                .eventDate(LocalDateTime.now().plusDays(6))
-                .publishedOn(LocalDateTime.now())
-                .initiator(initiator)
-                .location(location)
-                .paid(true)
-                .participantLimit(0)
-                .requestModeration(true)
-                .title("title")
-                .state(StateEnum.PUBLISHED)
-                .build();
-        publishedEvent1 = eventRepository.save(publishedEvent1);
-        Event publishedEvent2 = Event.builder()
-                .annotation("Золотопромышленность")
-                .category(category)
-                .description("Деревообрабатывающий")
-                .eventDate(LocalDateTime.now().plusDays(5))
-                .publishedOn(LocalDateTime.now())
-                .initiator(initiator)
-                .location(location)
-                .paid(true)
-                .participantLimit(0)
-                .requestModeration(true)
-                .title("title")
-                .state(StateEnum.PUBLISHED)
-                .build();
-        publishedEvent2 = eventRepository.save(publishedEvent2);
-        Event publishedEvent3 = Event.builder()
-                .annotation("Лжесвидетельствовать")
-                .category(category)
-                .description("Предводительствовать")
-                .eventDate(LocalDateTime.now().plusDays(5))
-                .publishedOn(LocalDateTime.now())
-                .initiator(initiator)
-                .location(location)
-                .paid(false)
-                .participantLimit(0)
-                .requestModeration(true)
-                .title("title")
-                .state(StateEnum.PUBLISHED)
-                .build();
-        eventRepository.save(publishedEvent3);
-
-        ParamsForPublic paramsForPublic = ParamsForPublic.builder()
-                .paid(true)
-                .build();
-        Pageable pageable = PageRequest.of(0 / 10, 10, Sort.by(Sort.Direction.ASC, SortEnum.EVENT_DATE.getName()));
-
+        UpdateEventRequest updateEventRequest = new UpdateEventRequest();
+        updateEventRequest.setStateAction(StateActionEnum.SEND_TO_REVIEW);
+        when(eventManager.findEventById(eq(2L))).thenReturn(event);
         //when
-        List<EventShortDto> events = eventService.findEventsPublic(paramsForPublic, pageable);
-        //then
-        assertThat(events).isNotEmpty();
-        assertThat(events.size()).isEqualTo(2);
-        assertThat(events.get(0).getAnnotation()).isEqualTo(publishedEvent2.getAnnotation());
-        assertThat(events.get(1).getAnnotation()).isEqualTo(publishedEvent1.getAnnotation());
+        eventService.updateEventByInitiator(1L, 2L, updateEventRequest);
+        verify(eventMapper, times(1)).update(any(), any(), eventCaptor.capture());
+        assertThat(eventCaptor.getValue().getState()).isEqualTo(StateEnum.PENDING);
     }
-
-    @Test
-    void confirmOrRejectNotPendingRequestsByInitiatorOfEvent() {
-        //before
-        event.setState(StateEnum.PUBLISHED);
-        event = eventRepository.save(event);
-
-        User user = new User(null, "test1@test.com", "Requester1");
-        user = userRepository.save(user);
-
-        User user2 = new User(null, "test2@test.com", "Requester2");
-        user2 = userRepository.save(user2);
-
-        Request request1 = Request.builder()
-                .created(LocalDateTime.now())
-                .event(event)
-                .requester(user)
-                .status(StatusEnum.CONFIRMED)
-                .build();
-        request1 = requestRepository.save(request1);
-        Request request2 = Request.builder()
-                .created(LocalDateTime.now())
-                .event(event)
-                .requester(user2)
-                .status(StatusEnum.REJECTED)
-                .build();
-        request2 = requestRepository.save(request2);
-
-        List<Long> requests = new ArrayList<>();
-        requests.add(request1.getId());
-        requests.add(request2.getId());
-        EventRequestStatusUpdateRequest statusUpdate = EventRequestStatusUpdateRequest.builder()
-                .requestIds(requests)
-                .status(StatusEnum.CONFIRMED)
-                .build();
-        //then
-        assertThatThrownBy(() -> eventService.confirmOrRejectRequestsByInitiatorOfEvent(initiator.getId(),
-                event.getId(), statusUpdate))
-                .isInstanceOf(ConflictException.class);
-    }
-
-    @Test
-    void confirmOrRejectRequestsByInitiatorOfEventSuccess() {
-        //before
-        event.setState(StateEnum.PUBLISHED);
-        event = eventRepository.save(event);
-
-        User user = new User(null, "test1@test.com", "Requester1");
-        user = userRepository.save(user);
-
-        User user2 = new User(null, "test2@test.com", "Requester2");
-        user2 = userRepository.save(user2);
-
-        Request request1 = Request.builder()
-                .created(LocalDateTime.now())
-                .event(event)
-                .requester(user)
-                .status(StatusEnum.PENDING)
-                .build();
-        request1 = requestRepository.save(request1);
-        Request request2 = Request.builder()
-                .created(LocalDateTime.now())
-                .event(event)
-                .requester(user2)
-                .status(StatusEnum.PENDING)
-                .build();
-        request2 = requestRepository.save(request2);
-
-        List<Long> requests = new ArrayList<>(List.of(request1.getId(), request2.getId()));
-        EventRequestStatusUpdateRequest statusUpdate = EventRequestStatusUpdateRequest.builder()
-                .requestIds(requests)
-                .status(StatusEnum.CONFIRMED)
-                .build();
-        //when
-        EventRequestStatusUpdateResult result = eventService.confirmOrRejectRequestsByInitiatorOfEvent(initiator.getId(),
-                event.getId(), statusUpdate);
-        //then
-        assertThat(result.getConfirmedRequests()).isNotEmpty();
-        assertThat(result.getConfirmedRequests().size()).isEqualTo(2);
-        assertThat(result.getRejectedRequests()).isEmpty();
-    }
-
-    //Только события, у которых не исчерпан лимит запросов на участие:
-    @Test
-    void findEventsPublicOnlyAvailable() {
-        //before
-        User user1 = new User(null, "test1@test.com", "Requester1");
-        user1 = userRepository.save(user1);
-        User user2 = new User(null, "test2@test.com", "Requester2");
-        user2 = userRepository.save(user2);
-        User user3 = new User(null, "test3@test.com", "Requester3");
-        user3 = userRepository.save(user3);
-
-        //есть подтверждённые заявки и participantLimit = 0
-        Event publishedEvent1 = Event.builder()
-                .annotation("Palaeoanthropologist")
-                .category(category)
-                .description("Indistinguishability")
-                .eventDate(LocalDateTime.now().plusDays(1))
-                .publishedOn(LocalDateTime.now())
-                .initiator(initiator)
-                .location(location)
-                .paid(true)
-                .participantLimit(0)
-                .requestModeration(true)
-                .title("title")
-                .state(StateEnum.PUBLISHED)
-                .build();
-        publishedEvent1 = eventRepository.save(publishedEvent1);
-        Request request1 = Request.builder()
-                .created(LocalDateTime.now())
-                .event(publishedEvent1)
-                .requester(user1)
-                .status(StatusEnum.CONFIRMED)
-                .build();
-        requestRepository.save(request1);
-
-        //participantLimit > кол-ва подтверждённых заявок
-        Event publishedEvent2 = Event.builder()
-                .annotation("Золотопромышленность")
-                .category(category)
-                .description("Деревообрабатывающий")
-                .eventDate(LocalDateTime.now().plusDays(2))
-                .publishedOn(LocalDateTime.now())
-                .initiator(initiator)
-                .location(location)
-                .paid(true)
-                .participantLimit(2)
-                .requestModeration(true)
-                .title("title")
-                .state(StateEnum.PUBLISHED)
-                .build();
-        publishedEvent2 = eventRepository.save(publishedEvent2);
-        Request request2 = Request.builder()
-                .created(LocalDateTime.now())
-                .event(publishedEvent2)
-                .requester(user1)
-                .status(StatusEnum.CONFIRMED)
-                .build();
-        requestRepository.save(request2);
-        Request request3 = Request.builder()
-                .created(LocalDateTime.now())
-                .event(publishedEvent2)
-                .requester(user2)
-                .status(StatusEnum.PENDING)
-                .build();
-        requestRepository.save(request3);
-        Request request7 = Request.builder()
-                .created(LocalDateTime.now())
-                .event(publishedEvent2)
-                .requester(user3)
-                .status(StatusEnum.PENDING)
-                .build();
-        requestRepository.save(request7);
-
-        //Эта заявка не попадёт в выборку, так как participantLimit == кол-ву подтверждённых заявок
-        Event publishedEvent3 = Event.builder()
-                .annotation("Лжесвидетельствовать")
-                .category(category)
-                .description("Предводительствовать")
-                .eventDate(LocalDateTime.now().plusDays(3))
-                .publishedOn(LocalDateTime.now())
-                .initiator(initiator)
-                .location(location)
-                .paid(false)
-                .participantLimit(1)
-                .requestModeration(true)
-                .title("title")
-                .state(StateEnum.PUBLISHED)
-                .build();
-        eventRepository.save(publishedEvent3);
-        Request request4 = Request.builder()
-                .created(LocalDateTime.now())
-                .event(publishedEvent3)
-                .requester(user1)
-                .status(StatusEnum.CONFIRMED)
-                .build();
-        requestRepository.save(request4);
-
-        //нет подтверждённых заявок на участие
-        Event publishedEvent4 = Event.builder()
-                .annotation("Навсегда ничего не бывает.")
-                .category(category)
-                .description("Л.Н.Толстой Война и мир")
-                .eventDate(LocalDateTime.now().plusDays(4))
-                .publishedOn(LocalDateTime.now())
-                .initiator(initiator)
-                .location(location)
-                .paid(false)
-                .participantLimit(1)
-                .requestModeration(true)
-                .title("title")
-                .state(StateEnum.PUBLISHED)
-                .build();
-        eventRepository.save(publishedEvent4);
-        Request request5 = Request.builder()
-                .created(LocalDateTime.now())
-                .event(publishedEvent4)
-                .requester(user1)
-                .status(StatusEnum.PENDING)
-                .build();
-        requestRepository.save(request5);
-        Request request6 = Request.builder()
-                .created(LocalDateTime.now())
-                .event(publishedEvent4)
-                .requester(user2)
-                .status(StatusEnum.PENDING)
-                .build();
-        requestRepository.save(request6);
-
-        //нет заявок на участие и participantLimit != 0
-        Event publishedEvent5 = Event.builder()
-                .annotation("Живи и ошибайся. В этом жизнь.")
-                .category(category)
-                .description("Разум бессилен перед криком сердца")
-                .eventDate(LocalDateTime.now().plusDays(5))
-                .publishedOn(LocalDateTime.now())
-                .initiator(initiator)
-                .location(location)
-                .paid(false)
-                .participantLimit(10)
-                .requestModeration(true)
-                .title("title")
-                .state(StateEnum.PUBLISHED)
-                .build();
-        eventRepository.save(publishedEvent5);
-
-        //нет заявок на участие и participantLimit = 0
-        Event publishedEvent6 = Event.builder()
-                .annotation("Всегда пишите код так, будто сопровождать его будет склонный к насилию психопат, который знает, где вы живете.")
-                .category(category)
-                .description("Простота — залог надежности")
-                .eventDate(LocalDateTime.now().plusDays(6))
-                .publishedOn(LocalDateTime.now())
-                .initiator(initiator)
-                .location(location)
-                .paid(false)
-                .participantLimit(0)
-                .requestModeration(true)
-                .title("title")
-                .state(StateEnum.PUBLISHED)
-                .build();
-        eventRepository.save(publishedEvent6);
-
-        ParamsForPublic paramsForPublic = ParamsForPublic.builder()
-                .onlyAvailable(true)
-                .build();
-        Pageable pageable = PageRequest.of(0 / 10, 10, Sort.by(Sort.Direction.ASC, SortEnum.EVENT_DATE.getName()));
-
-        //when
-        List<EventShortDto> events = eventService.findEventsPublic(paramsForPublic, pageable);
-        //then
-        assertThat(events).isNotEmpty();
-        assertThat(events.size()).isEqualTo(5);
-        assertThat(events.get(0).getAnnotation()).isEqualTo(publishedEvent1.getAnnotation());
-        assertThat(events.get(1).getAnnotation()).isEqualTo(publishedEvent2.getAnnotation());
-        assertThat(events.get(4).getAnnotation()).isEqualTo(publishedEvent6.getAnnotation());
-    }
-
-
 }

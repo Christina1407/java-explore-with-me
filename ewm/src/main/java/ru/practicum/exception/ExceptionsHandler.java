@@ -32,13 +32,14 @@ public class ExceptionsHandler {
     public ApiError handleNotFoundException(final NotFoundException e) {
         return new ApiError(HttpStatus.NOT_FOUND.name(), "The required object was not found.", e.getMessage(), LocalDateTime.now());
     }
+
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiError handleMethodArgumentNotValidException(final MethodArgumentNotValidException e) {
         StringBuilder message = new StringBuilder();
         e.getBindingResult().getFieldErrors().forEach(
-               error -> message.append("Field: ").append(error.getField()).append(". Error: ")
-                       .append(error.getDefaultMessage()).append(". Value: ").append(error.getRejectedValue()).append(". ")
+                error -> message.append("Field: ").append(error.getField()).append(". Error: ")
+                        .append(error.getDefaultMessage()).append(". Value: ").append(error.getRejectedValue()).append(". ")
         );
         if (message.toString().isBlank()) {
             e.getBindingResult().getAllErrors().forEach(
@@ -51,14 +52,14 @@ public class ExceptionsHandler {
     @ExceptionHandler
     @ResponseStatus(HttpStatus.CONFLICT)
     public ApiError handleConflictException(final ConflictException e) {
-        return new ApiError(HttpStatus.CONFLICT.name(), e.getReason(), e.getMessage(), LocalDateTime.now() );
+        return new ApiError(HttpStatus.CONFLICT.name(), e.getReason(), e.getMessage(), LocalDateTime.now());
     }
 
     @ExceptionHandler({ConstraintViolationException.class, MethodArgumentTypeMismatchException.class,
             MissingServletRequestParameterException.class, HttpMessageNotReadableException.class, BindException.class})
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiError handleBadRequestException(final Exception e) {
-        return new ApiError(HttpStatus.BAD_REQUEST.name(), "Incorrectly made request.", e.getMessage(), LocalDateTime.now() );
+        return new ApiError(HttpStatus.BAD_REQUEST.name(), "Incorrectly made request.", e.getMessage(), LocalDateTime.now());
     }
 
 }

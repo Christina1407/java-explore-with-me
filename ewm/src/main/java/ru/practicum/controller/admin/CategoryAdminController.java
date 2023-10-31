@@ -36,7 +36,7 @@ public class CategoryAdminController {
     @PatchMapping("{categoryId}")
     public CategoryDto updateCategory(@PathVariable("categoryId") @Min(1) Long categoryId,
                                       @RequestBody @Valid CategoryDto categoryDto) {
-        log.info("Попытка обновления category {} id = {}",categoryDto, categoryId);
+        log.info("Попытка обновления category {} id = {}", categoryDto, categoryId);
         return categoryService.updateCategory(categoryDto, categoryId);
     }
 }

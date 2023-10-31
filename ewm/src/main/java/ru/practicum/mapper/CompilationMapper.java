@@ -19,7 +19,8 @@ public interface CompilationMapper {
     Compilation map(NewCompilationDto newCompilationDto, List<Event> eventList);
 
     CompilationDto map(Compilation compilation);
-    List<CompilationDto> map (List<Compilation> compilations);
+
+    List<CompilationDto> map(List<Compilation> compilations);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "events", source = "eventList")

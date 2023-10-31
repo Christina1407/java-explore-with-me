@@ -11,7 +11,7 @@ public interface EventService {
 
     EventFullDto findInitiatorEventById(Long userId, Long eventId);
 
-    EventFullDto findEventByIdPublic(Long eventId, String ip, String requestURI);
+    EventFullDto findEventByIdPublic(Long eventId);
 
     List<EventShortDto> findEventsPublic(ParamsForPublic params, Pageable pageable);
 

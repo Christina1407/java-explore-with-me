@@ -74,7 +74,6 @@ public class CompilationServiceImpl implements CompilationService {
         List<Compilation> compilations = isNull(pinned) ?
                 compilationRepository.findAll(pageable).getContent() :
                 compilationRepository.findAllByPinned(pinned, pageable);
-        //TODO переделать
         compilations.forEach(
                 compilation -> {
                     eventManager.enrichEventsByViews(compilation.getEvents());

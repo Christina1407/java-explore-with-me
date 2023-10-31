@@ -13,7 +13,6 @@ import ru.practicum.model.dto.ParamsForPublic;
 import ru.practicum.model.enums.SortEnum;
 import ru.practicum.service.EventService;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import java.util.List;
@@ -28,22 +27,16 @@ public class EventPublicController {
 
     @GetMapping
     public List<EventShortDto> findEventsPublic(@Valid ParamsForPublic params,
-                                               @RequestParam(name = "from", defaultValue = "0") @Min(0) int from,
-                                               @RequestParam(name = "size", defaultValue = "10") @Min(1) int size,
-                                               @RequestParam(name = "sort", defaultValue = "EVENT_DATE") SortEnum sort) {
-
+                                                @RequestParam(name = "from", defaultValue = "0") @Min(0) int from,
+                                                @RequestParam(name = "size", defaultValue = "10") @Min(1) int size,
+                                                @RequestParam(name = "sort", defaultValue = "EVENT_DATE") SortEnum sort) {
         Pageable pageable = PageRequest.of(from / size, size, Sort.by(Sort.Direction.ASC, sort.getName()));
         return eventService.findEventsPublic(params, pageable);
     }
 
     @GetMapping("/{eventId}")
-    public EventFullDto findEventById(@PathVariable @Min(1) Long eventId,
-                                      HttpServletRequest request) {
+    public EventFullDto findEventById(@PathVariable @Min(1) Long eventId) {
         log.info("Get event id = {}", eventId);
-        String ip = request.getRemoteAddr();
-        log.info("client ip: {}", ip);
-        String requestURI = request.getRequestURI();
-        log.info("endpoint path: {}", requestURI);
-        return eventService.findEventByIdPublic(eventId, ip, requestURI);
+        return eventService.findEventByIdPublic(eventId);
     }
 }

@@ -22,10 +22,11 @@ public class CategoryPublicController {
 
     @GetMapping
     public List<CategoryDto> getAllCategories(@RequestParam(name = "from", defaultValue = "0") @Min(0) int from,
-                                               @RequestParam(name = "size", defaultValue = "10") @Min(1) int size) {
+                                              @RequestParam(name = "size", defaultValue = "10") @Min(1) int size) {
         Pageable pageable = PageRequest.of(from / size, size);
         return categoryService.getAllCategories(pageable);
     }
+
     @GetMapping("/{categoryId}")
     public CategoryDto findCategoryById(@PathVariable @Min(1) Long categoryId) {
         log.info("Get category id = {}", categoryId);

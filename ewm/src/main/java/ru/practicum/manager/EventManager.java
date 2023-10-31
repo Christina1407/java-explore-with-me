@@ -44,6 +44,7 @@ public class EventManager {
                 .filter(request -> request.getStatus().equals(StatusEnum.CONFIRMED))
                 .count();
     }
+
     public void enrichEventByConfirmedRequests(Event event) {
         if (event.getState().equals(StateEnum.PUBLISHED)) {
             event.setConfirmedRequests(getQuantityOfConfirmedRequests(event));
@@ -75,7 +76,7 @@ public class EventManager {
     }
 
     public void enrichEventsByViews(List<Event> eventList) {
-         //просмотры могут быть только у опубликованных событий
+        //просмотры могут быть только у опубликованных событий
         List<Event> publishedEventList = getPublishedEvents(eventList);
         if (publishedEventList == null) return;
 

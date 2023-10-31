@@ -52,7 +52,6 @@ public class RequestServiceImpl implements RequestService {
                     "For the requested operation the conditions are not met.");
         }
         //Нельзя добавить повторный запрос
-        //TODO или если запрос 'REJECTED' или 'CANCELED', то можно?
         if (requestRepository.existsByRequesterIdAndEventId(userId, eventId)) {
             log.error("Request with eventId = {} and requesterId = {} already exists", eventId, userId);
             throw new ConflictException(String.format("Request with eventId = %d and requesterId = %d already exists", eventId, userId),

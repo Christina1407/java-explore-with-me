@@ -45,7 +45,7 @@ public class UserServiceImpl implements UserService {
     @Transactional(readOnly = true)
     public List<UserDto> getUsers(List<Long> ids, Pageable pageable) {
         List<User> users = (isNull(ids) || ids.isEmpty()) ?
-                userRepository.findAll(pageable).getContent():
+                userRepository.findAll(pageable).getContent() :
                 userRepository.findByIdIn(ids, pageable);
         return userMapper.map(users);
     }

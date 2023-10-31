@@ -28,8 +28,8 @@ public class CompilationPublicController {
 
     @GetMapping
     public List<CompilationDto> findCompilations(@RequestParam(name = "pinned", required = false) Boolean pinned,
-                                                @RequestParam(name = "from", defaultValue = "0") @Min(0) int from,
-                                                @RequestParam(name = "size", defaultValue = "10") @Min(1) int size) {
+                                                 @RequestParam(name = "from", defaultValue = "0") @Min(0) int from,
+                                                 @RequestParam(name = "size", defaultValue = "10") @Min(1) int size) {
         log.info("Get compilations pinned = {}", pinned);
         Pageable pageable = PageRequest.of(from / size, size);
         return compilationService.findCompilations(pinned, pageable);

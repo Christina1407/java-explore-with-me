@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import ru.practicum.StatClient;
+import ru.practicum.aspect.SaveStatistic;
 import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.NotFoundException;
 import ru.practicum.manager.CategoryManager;
@@ -82,7 +83,8 @@ public class EventServiceImpl implements EventService {
 
     @Override
     @Transactional(readOnly = true)
-    public EventFullDto findEventByIdPublic(Long eventId, String ip, String requestURI) {
+    @SaveStatistic
+    public EventFullDto findEventByIdPublic(Long eventId) {
         Event event = eventManager.findEventById(eventId);
 
         //Событие должно быть PUBLISHED
@@ -95,18 +97,18 @@ public class EventServiceImpl implements EventService {
         eventManager.enrichEventByViews(event);
 
         //Информацию о том, что по этому эндпоинту был осуществлен и обработан запрос, нужно сохранить в сервисе статистики
-        statClient.saveHit(requestURI, "ewm", ip, LocalDateTime.now());
 
         return eventMapper.map(event);
     }
 
     @Override
     @Transactional(readOnly = true)
+    @SaveStatistic
     public List<EventShortDto> findEventsPublic(ParamsForPublic params, Pageable pageable) {
-        //TODO информация о каждом событии должна включать в себя количество просмотров и количество уже одобренных заявок на участие
-        //TODO информацию о том, что по этому эндпоинту был осуществлен и обработан запрос, нужно сохранить в сервисе статистики
+        //информацию о том, что по этому эндпоинту был осуществлен и обработан запрос, нужно сохранить в сервисе статистики
 
         List<Event> events = eventRepository.findAll(getPredicateByParamsForPublic(params), pageable).getContent();
+        //информация о каждом событии должна включать в себя количество просмотров и количество уже одобренных заявок на участие
         eventManager.enrichEventsByViews(events);
         eventManager.enrichEventsByConfirmedRequests(events);
         return eventMapper.mapToEventShortDtoList(events);
@@ -117,8 +119,8 @@ public class EventServiceImpl implements EventService {
         Event eventForUpdate = eventManager.findEventById(eventId);
         checkInitiator(userId, eventForUpdate);
 
-        //Изменить можно только отмененные события или события в состоянии ожидания модерации (Ожидается код ошибки 409)
-        if (nonNull(eventForUpdate.getState()) && Objects.equals(eventForUpdate.getState(), StateEnum.PUBLISHED)) {
+        //Изменить можно только отмененные события или события в состоянии ожидания модерации
+        if (nonNull(eventForUpdate.getState()) && eventForUpdate.getState().equals(StateEnum.PUBLISHED)) {
             log.error("You can update the event if state = {} or {}. Event id = {} has state = {}",
                     StateEnum.PENDING, StateEnum.CANCELED, eventId, eventForUpdate.getState());
             throw new ConflictException(String.format("Event id = %d has state = %s." +
@@ -126,22 +128,23 @@ public class EventServiceImpl implements EventService {
                     "For the requested operation the conditions are not met.");
         }
 
-        //Дата и время, на которые намечено событие не может быть раньше, чем через два часа от текущего момента (Ожидается код ошибки 409)
+        //Дата и время, на которые намечено событие не может быть раньше, чем через два часа от текущего момента
         checkEventDate(updateEventUserRequest, 2);
 
         //Новое состояние события
         StateActionEnum stateAction = updateEventUserRequest.getStateAction();
-        if (Objects.equals(stateAction, StateActionEnum.SEND_TO_REVIEW)) {
-            eventForUpdate.setState(StateEnum.PENDING);
-        } else if (Objects.equals(stateAction, StateActionEnum.CANCEL_REVIEW)) {
-            eventForUpdate.setState(StateEnum.CANCELED);
+        if (nonNull(stateAction)) {
+            if (stateAction.equals(StateActionEnum.SEND_TO_REVIEW)) {
+                eventForUpdate.setState(StateEnum.PENDING);
+            } else if (stateAction.equals(StateActionEnum.CANCEL_REVIEW)) {
+                eventForUpdate.setState(StateEnum.CANCELED);
+            }
         }
 
         //Если прилетел айдишник категории, проверяем, что есть такая категория
         Category category = getCategory(updateEventUserRequest);
 
         eventMapper.update(updateEventUserRequest, category, eventForUpdate);
-
         return eventMapper.map(eventForUpdate);
     }
 
@@ -171,28 +174,28 @@ public class EventServiceImpl implements EventService {
         //Дата начала изменяемого события должна быть не ранее чем за час от даты публикации
         checkEventDate(updateEventAdminRequest, 1);
 
-        //Событие можно опубликовать/отклонить, только если оно в состоянии ожидания публикации
-        if (!Objects.equals(eventForUpdate.getState(), StateEnum.PENDING)) {
-            log.error("Event id = {} has state = {}", eventId, eventForUpdate.getState());
-            throw new ConflictException(String.format("Event id = %d has state = %s." +
-                    " The event can be published or cancel only if state = %s", eventId, eventForUpdate.getState(), StateEnum.PENDING),
-                    "For the requested operation the conditions are not met.");
-        }
+        //Если меняется лимит участников(не на значение 0), то он не может быть меньше кол-ва уже подтверждённых заявок
+        checkNewParticipantLimit(eventId, updateEventAdminRequest, eventForUpdate);
 
         //Новое состояние события
         StateActionEnum stateAction = updateEventAdminRequest.getStateAction();
-        if (Objects.equals(stateAction, StateActionEnum.PUBLISH_EVENT)) {
-            eventForUpdate.setPublishedOn(LocalDateTime.now());
-            eventForUpdate.setState(StateEnum.PUBLISHED);
-        } else if (Objects.equals(stateAction, StateActionEnum.REJECT_EVENT)) {
-            eventForUpdate.setState(StateEnum.CANCELED);
+        if (nonNull(stateAction)) {
+            //Событие можно опубликовать, только если оно в состоянии ожидания публикации
+            //Событие можно отклонить, только если оно еще не опубликовано
+            if (stateAction.equals(StateActionEnum.PUBLISH_EVENT)) {
+                publishPendingEventOrThrow(eventId, eventForUpdate);
+            } else if (stateAction.equals(StateActionEnum.REJECT_EVENT)) {
+                cancelNotPublishedEventOrThrow(eventId, eventForUpdate);
+            }
         }
 
         //Если прилетел айдишник категории, проверяем, что такая категория есть
         Category category = getCategory(updateEventAdminRequest);
 
         eventMapper.update(updateEventAdminRequest, category, eventForUpdate);
-        return eventMapper.map(eventForUpdate); //у события еще не может быть запросов и просмотров
+        eventManager.enrichEventByViews(eventForUpdate);
+        eventManager.enrichEventByConfirmedRequests(eventForUpdate);
+        return eventMapper.map(eventForUpdate);
     }
 
     @Override
@@ -278,6 +281,43 @@ public class EventServiceImpl implements EventService {
             log.error("Пользователь c id = {} хочет получить данные события id = {}. " +
                     "Данные о событии по этому эндпоинту доступны только инициатору.", userId, event.getId());
             throw new NotFoundException(String.format("Пользователь c id = %d не инициатор события id = %d.", userId, event.getId()));
+        }
+    }
+
+    private void checkNewParticipantLimit(Long eventId, UpdateEventRequest updateEventAdminRequest, Event eventForUpdate) {
+        Integer newParticipantLimit = updateEventAdminRequest.getParticipantLimit();
+        if (nonNull(newParticipantLimit) && newParticipantLimit != 0 &&
+                newParticipantLimit < eventManager.getQuantityOfConfirmedRequests(eventForUpdate)) {
+            log.error("Event id = {} quantity of confirmed requests = {} > NewParticipantLimit = {}",
+                    eventId, eventManager.getQuantityOfConfirmedRequests(eventForUpdate), newParticipantLimit);
+            throw new ConflictException(String.format("Event id = %d confirmed requests = %d" +
+                    " > NewParticipantLimit = %d", eventId, eventManager.getQuantityOfConfirmedRequests(eventForUpdate), newParticipantLimit),
+                    "For the requested operation the conditions are not met.");
+        }
+    }
+
+    private void cancelNotPublishedEventOrThrow(Long eventId, Event eventForUpdate) {
+        if (!eventForUpdate.getState().equals(StateEnum.PUBLISHED)) {
+            eventForUpdate.setState(StateEnum.CANCELED);
+        } else {
+            log.error("Event id = {} has state = {}. The event can be canceled only if state!= {}",
+                    eventId, eventForUpdate.getState(), StateEnum.PUBLISHED);
+            throw new ConflictException(String.format("Event id = %d has state = %s." +
+                    " The event can be canceled only if state != %s", eventId, eventForUpdate.getState(), StateEnum.PUBLISHED),
+                    "For the requested operation the conditions are not met.");
+        }
+    }
+
+    private void publishPendingEventOrThrow(Long eventId, Event eventForUpdate) {
+        if (eventForUpdate.getState().equals(StateEnum.PENDING)) {
+            eventForUpdate.setPublishedOn(LocalDateTime.now());
+            eventForUpdate.setState(StateEnum.PUBLISHED);
+        } else {
+            log.error("Event id = {} has state = {}. The event can be published only if state {}",
+                    eventId, eventForUpdate.getState(), StateEnum.PENDING);
+            throw new ConflictException(String.format("Event id = %d has state = %s." +
+                    " The event can be published only if state = %s", eventId, eventForUpdate.getState(), StateEnum.PENDING),
+                    "For the requested operation the conditions are not met.");
         }
     }
 
