@@ -33,6 +33,11 @@
                 <artifactId>mapstruct</artifactId>
                 <version>1.5.5.Final</version>
             </dependency>
+            <dependency>
+                <groupId>com.querydsl</groupId>
+                <artifactId>querydsl-jpa</artifactId>
+                <version>5.0.0</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 

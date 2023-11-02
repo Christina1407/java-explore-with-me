@@ -5,7 +5,7 @@ import lombok.*;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
+import javax.validation.constraints.PastOrPresent;
 import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
 
@@ -24,9 +24,9 @@ public class HitDto {
     private String app;
     @NotBlank
     @Size(max = 50, message = "ip is more than 50 symbols")
-    @Pattern(regexp = "^((25[0-5]|(2[0-4]|1[0-9]|[1-9]|)[0-9])(\\.(?!$)|$)){4}$", message = "Invalid IP Address")
     private String ip;
     @NotNull(message = "timestamp is null")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+    @PastOrPresent
     private LocalDateTime timestamp;
 }

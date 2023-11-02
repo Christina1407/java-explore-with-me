@@ -5,7 +5,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
-import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.client.RestTemplate;
@@ -32,16 +31,13 @@ public class StatClient {
     public StatClient(@Value("${stat-service.url}") String serverUrl, RestTemplateBuilder builder) {
         this.rest = builder
                 .uriTemplateHandler(new DefaultUriBuilderFactory(serverUrl))
-                .requestFactory(HttpComponentsClientHttpRequestFactory::new)
                 .build();
-        ;
     }
 
     public void saveHit(@NotBlank @Size(max = 2000, message = "uri is more than 2000 symbols") String uri,
                         @NotBlank @Size(max = 200, message = "appName is more than 200 symbols") String app,
-                        @NotBlank @Size(max = 50, message = "ip is more than 50 symbols")
-                        @Pattern(regexp = "^((25[0-5]|(2[0-4]|1[0-9]|[1-9]|)[0-9])(\\.(?!$)|$)){4}$", message = "Invalid IP Address") String ip,
-                        @NotNull(message = "timestamp is null") LocalDateTime timestamp) {
+                        @NotBlank @Size(max = 50, message = "ip is more than 50 symbols") String ip,
+                        @NotNull @PastOrPresent(message = "timestamp is null or in future") LocalDateTime timestamp) {
         HitDto hitDto = HitDto.builder()
                 .uri(uri)
                 .app(app)
@@ -55,7 +51,7 @@ public class StatClient {
         }
     }
 
-    public List<StatDtoResponse> getStats(@NotNull @Past(message = "start can't be in future") LocalDateTime start,
+    public List<StatDtoResponse> getStats(@NotNull @PastOrPresent(message = "start can't be in future") LocalDateTime start,
                                           @NotNull LocalDateTime end) {
         validate(start, end);
         log.info("Попытка получение статистики от сервиса статистики с параметрами start = {} , end = {}", start, end);
@@ -68,7 +64,7 @@ public class StatClient {
         return response.getBody();
     }
 
-    public List<StatDtoResponse> getStats(@NotNull @Past(message = "start can't be in future") LocalDateTime start,
+    public List<StatDtoResponse> getStats(@NotNull @PastOrPresent(message = "start can't be in future") LocalDateTime start,
                                           @NotNull LocalDateTime end,
                                           List<String> uris) {
         validate(start, end);
@@ -83,7 +79,7 @@ public class StatClient {
         return response.getBody();
     }
 
-    public List<StatDtoResponse> getStats(@NotNull @Past(message = "start can't be in future") LocalDateTime start,
+    public List<StatDtoResponse> getStats(@NotNull @PastOrPresent(message = "start can't be in future") LocalDateTime start,
                                           @NotNull LocalDateTime end,
                                           List<String> uris,
                                           boolean unique) {
@@ -100,7 +96,7 @@ public class StatClient {
         return response.getBody();
     }
 
-    public List<StatDtoResponse> getStats(@NotNull @Past(message = "start can't be in future") LocalDateTime start,
+    public List<StatDtoResponse> getStats(@NotNull @PastOrPresent(message = "start can't be in future") LocalDateTime start,
                                           @NotNull LocalDateTime end,
                                           boolean unique) {
         validate(start, end);
@@ -115,7 +111,7 @@ public class StatClient {
         return response.getBody();
     }
 
-    public List<StatDtoResponse> getStats(@NotNull @Past(message = "start can't be in future") LocalDateTime start,
+    public List<StatDtoResponse> getStats(@NotNull @PastOrPresent(message = "start can't be in future") LocalDateTime start,
                                           @NotNull LocalDateTime end,
                                           List<String> uris,
                                           Boolean unique,
