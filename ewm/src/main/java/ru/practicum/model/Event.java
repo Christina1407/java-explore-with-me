@@ -24,7 +24,7 @@ public class Event {
     private Long id;
     @Column(name = "annotation", nullable = false, length = 2000)
     private String annotation;
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
     @Column(name = "description", nullable = false, length = 7000)
@@ -36,10 +36,10 @@ public class Event {
     private LocalDateTime createdOn;
     @Column(name = "published_date", nullable = false)
     private LocalDateTime publishedOn;
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "initiator_id", nullable = false)
     private User initiator;
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "location_id", nullable = false)
     private Location location;
     @Column(name = "paid")
@@ -55,12 +55,6 @@ public class Event {
     private StateEnum state;
     @OneToMany(mappedBy = "event")
     private List<Request> requests;
-    @ManyToMany
-    @JoinTable(
-            name = "events_compilations",
-            joinColumns = @JoinColumn(name = "event_id"),
-            inverseJoinColumns = @JoinColumn(name = "compilation_id"))
-    List<Compilation> compilations;
     @Transient
     private Long views;
     @Transient

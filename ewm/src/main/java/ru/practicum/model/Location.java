@@ -20,4 +20,7 @@ public class Location {
     private float lat;
     @Column(name = "lon", nullable = false)
     private float lon;
+    @Column(name = "radius", nullable = false)
+    private int radius;
+
 }
