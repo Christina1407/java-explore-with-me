@@ -10,7 +10,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
-import ru.practicum.StatClient;
 import ru.practicum.aspect.SaveStatistic;
 import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.NotFoundException;
@@ -18,7 +17,6 @@ import ru.practicum.manager.CategoryManager;
 import ru.practicum.manager.EventManager;
 import ru.practicum.manager.UserManager;
 import ru.practicum.mapper.EventMapper;
-import ru.practicum.mapper.LocationMapper;
 import ru.practicum.mapper.RequestMapper;
 import ru.practicum.model.*;
 import ru.practicum.model.dto.*;
@@ -26,7 +24,6 @@ import ru.practicum.model.enums.StateActionEnum;
 import ru.practicum.model.enums.StateEnum;
 import ru.practicum.model.enums.StatusEnum;
 import ru.practicum.repo.EventRepository;
-import ru.practicum.repo.LocationRepository;
 import ru.practicum.repo.RequestRepository;
 import ru.practicum.service.EventService;
 
@@ -53,9 +50,6 @@ public class EventServiceImpl implements EventService {
     private final RequestRepository requestRepository;
     private final EventMapper eventMapper;
     private final CategoryManager categoryManager;
-    private final LocationRepository locationRepository;
-    private final LocationMapper locationMapper;
-    private final StatClient statClient;
     private final RequestMapper requestMapper;
     private final EntityManager entityManager;
 
@@ -63,8 +57,7 @@ public class EventServiceImpl implements EventService {
     public EventFullDto saveEvent(Long userId, NewEventDto newEventDto) {
         User user = userManager.findUserById(userId);
         Category category = categoryManager.findCategoryById(newEventDto.getCategory());
-        Location location = locationRepository.save(locationMapper.map(newEventDto.getLocation()));
-        Event eventForSave = eventMapper.map(newEventDto, category, location, user, StateEnum.PENDING);
+        Event eventForSave = eventMapper.map(newEventDto, category, user, StateEnum.PENDING);
         Event event = eventRepository.save(eventForSave);
         return eventMapper.map(event);
     }

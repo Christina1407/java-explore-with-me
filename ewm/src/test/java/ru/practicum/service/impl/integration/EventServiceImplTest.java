@@ -14,13 +14,19 @@ import org.springframework.test.annotation.DirtiesContext;
 import ru.practicum.StatClient;
 import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.NotFoundException;
-import ru.practicum.model.*;
+import ru.practicum.model.Category;
+import ru.practicum.model.Event;
+import ru.practicum.model.Request;
+import ru.practicum.model.User;
 import ru.practicum.model.dto.*;
 import ru.practicum.model.enums.SortEnum;
 import ru.practicum.model.enums.StateActionEnum;
 import ru.practicum.model.enums.StateEnum;
 import ru.practicum.model.enums.StatusEnum;
-import ru.practicum.repo.*;
+import ru.practicum.repo.CategoryRepository;
+import ru.practicum.repo.EventRepository;
+import ru.practicum.repo.RequestRepository;
+import ru.practicum.repo.UserRepository;
 import ru.practicum.service.EventService;
 
 import java.time.LocalDateTime;
@@ -46,14 +52,11 @@ public class EventServiceImplTest {
     private UserRepository userRepository;
     @Autowired
     private CategoryRepository categoryRepository;
-    @Autowired
-    private LocationRepository locationRepository;
     @MockBean
     private StatClient statClient;
     private Event event;
     private User initiator;
     private Category category;
-    private Location location;
 
     @BeforeEach
     void setUp() {
@@ -61,15 +64,12 @@ public class EventServiceImplTest {
         initiator = userRepository.save(initiator);
         category = new Category(null, "test");
         category = categoryRepository.save(category);
-        location = new Location(null, -85.1388F, 81.6359F);
-        location = locationRepository.save(location);
         event = Event.builder()
                 .annotation("Annotation teeeeeeest")
                 .category(category)
                 .description("Description teeeeeeest")
                 .eventDate(LocalDateTime.now().plusDays(5))
                 .initiator(initiator)
-                .location(location)
                 .paid(true)
                 .participantLimit(0)
                 .requestModeration(true)
@@ -167,7 +167,6 @@ public class EventServiceImplTest {
                 .eventDate(LocalDateTime.now().plusDays(6))
                 .publishedOn(LocalDateTime.now())
                 .initiator(initiator)
-                .location(location)
                 .paid(true)
                 .participantLimit(0)
                 .requestModeration(true)
@@ -182,7 +181,6 @@ public class EventServiceImplTest {
                 .eventDate(LocalDateTime.now().plusDays(5))
                 .publishedOn(LocalDateTime.now())
                 .initiator(initiator)
-                .location(location)
                 .paid(true)
                 .participantLimit(0)
                 .requestModeration(true)
@@ -197,7 +195,6 @@ public class EventServiceImplTest {
                 .eventDate(LocalDateTime.now().plusDays(5))
                 .publishedOn(LocalDateTime.now())
                 .initiator(initiator)
-                .location(location)
                 .paid(false)
                 .participantLimit(0)
                 .requestModeration(true)
@@ -320,7 +317,6 @@ public class EventServiceImplTest {
                 .eventDate(LocalDateTime.now().plusDays(1))
                 .publishedOn(LocalDateTime.now())
                 .initiator(initiator)
-                .location(location)
                 .paid(true)
                 .participantLimit(0)
                 .requestModeration(true)
@@ -344,7 +340,6 @@ public class EventServiceImplTest {
                 .eventDate(LocalDateTime.now().plusDays(2))
                 .publishedOn(LocalDateTime.now())
                 .initiator(initiator)
-                .location(location)
                 .paid(true)
                 .participantLimit(2)
                 .requestModeration(true)
@@ -382,7 +377,6 @@ public class EventServiceImplTest {
                 .eventDate(LocalDateTime.now().plusDays(3))
                 .publishedOn(LocalDateTime.now())
                 .initiator(initiator)
-                .location(location)
                 .paid(false)
                 .participantLimit(1)
                 .requestModeration(true)
@@ -406,7 +400,6 @@ public class EventServiceImplTest {
                 .eventDate(LocalDateTime.now().plusDays(4))
                 .publishedOn(LocalDateTime.now())
                 .initiator(initiator)
-                .location(location)
                 .paid(false)
                 .participantLimit(1)
                 .requestModeration(true)
@@ -437,7 +430,6 @@ public class EventServiceImplTest {
                 .eventDate(LocalDateTime.now().plusDays(5))
                 .publishedOn(LocalDateTime.now())
                 .initiator(initiator)
-                .location(location)
                 .paid(false)
                 .participantLimit(10)
                 .requestModeration(true)
@@ -454,7 +446,6 @@ public class EventServiceImplTest {
                 .eventDate(LocalDateTime.now().plusDays(6))
                 .publishedOn(LocalDateTime.now())
                 .initiator(initiator)
-                .location(location)
                 .paid(false)
                 .participantLimit(0)
                 .requestModeration(true)
@@ -488,7 +479,6 @@ public class EventServiceImplTest {
                 .eventDate(LocalDateTime.now().plusDays(1))
                 .publishedOn(LocalDateTime.now())
                 .initiator(initiator)
-                .location(location)
                 .paid(true)
                 .participantLimit(0)
                 .requestModeration(true)
@@ -504,7 +494,6 @@ public class EventServiceImplTest {
                 .eventDate(LocalDateTime.now().plusDays(2))
                 .publishedOn(LocalDateTime.now())
                 .initiator(initiator)
-                .location(location)
                 .paid(true)
                 .participantLimit(2)
                 .requestModeration(true)
@@ -524,7 +513,6 @@ public class EventServiceImplTest {
                 .eventDate(LocalDateTime.now().plusDays(3))
                 .publishedOn(LocalDateTime.now())
                 .initiator(initiator)
-                .location(location)
                 .paid(false)
                 .participantLimit(1)
                 .requestModeration(true)
@@ -558,7 +546,6 @@ public class EventServiceImplTest {
                 .eventDate(LocalDateTime.now().plusDays(1))
                 .publishedOn(LocalDateTime.now())
                 .initiator(initiator)
-                .location(location)
                 .paid(true)
                 .participantLimit(0)
                 .requestModeration(true)
@@ -574,7 +561,6 @@ public class EventServiceImplTest {
                 .eventDate(LocalDateTime.now().plusDays(2))
                 .publishedOn(LocalDateTime.now())
                 .initiator(initiator)
-                .location(location)
                 .paid(true)
                 .participantLimit(2)
                 .requestModeration(true)
@@ -592,7 +578,6 @@ public class EventServiceImplTest {
                 .eventDate(LocalDateTime.now().plusDays(3))
                 .publishedOn(LocalDateTime.now())
                 .initiator(initiator)
-                .location(location)
                 .paid(false)
                 .participantLimit(1)
                 .requestModeration(true)

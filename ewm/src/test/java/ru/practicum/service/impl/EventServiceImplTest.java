@@ -13,7 +13,6 @@ import ru.practicum.manager.CategoryManager;
 import ru.practicum.manager.EventManager;
 import ru.practicum.manager.UserManager;
 import ru.practicum.mapper.EventMapper;
-import ru.practicum.mapper.LocationMapper;
 import ru.practicum.mapper.RequestMapper;
 import ru.practicum.model.Event;
 import ru.practicum.model.User;
@@ -22,7 +21,6 @@ import ru.practicum.model.dto.UpdateEventRequest;
 import ru.practicum.model.enums.StateActionEnum;
 import ru.practicum.model.enums.StateEnum;
 import ru.practicum.repo.EventRepository;
-import ru.practicum.repo.LocationRepository;
 import ru.practicum.repo.RequestRepository;
 import ru.practicum.service.EventService;
 
@@ -48,10 +46,6 @@ class EventServiceImplTest {
     @Mock
     private CategoryManager categoryManager;
     @Mock
-    private LocationRepository locationRepository;
-    @Mock
-    private LocationMapper locationMapper;
-    @Mock
     private StatClient statClient;
     @Mock
     private RequestMapper requestMapper;
@@ -65,7 +59,7 @@ class EventServiceImplTest {
     @BeforeEach
     void setUp() {
         eventService = new EventServiceImpl(userManager, eventManager, eventRepository, requestRepository,
-                eventMapper, categoryManager, locationRepository, locationMapper, statClient, requestMapper, entityManager);
+                eventMapper, categoryManager, requestMapper, entityManager);
         event = Event.builder()
                 .initiator(User.builder().id(1L).build())
                 .build();

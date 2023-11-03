@@ -7,9 +7,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping(path = "/admin/location")
+@RequestMapping(path = "/admin/places")
 @RequiredArgsConstructor
 @Slf4j
 @Validated
-public class LocationAdminController {
+public class PlacesAdminController {
 }

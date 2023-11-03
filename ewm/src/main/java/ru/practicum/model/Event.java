@@ -39,9 +39,6 @@ public class Event {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "initiator_id", nullable = false)
     private User initiator;
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "location_id", nullable = false)
-    private Location location;
     @Column(name = "paid")
     private boolean paid;
     @Column(name = "participant_limit")
@@ -53,10 +50,20 @@ public class Event {
     @Column(name = "state", nullable = false)
     @Enumerated(EnumType.STRING)
     private StateEnum state;
+    @Column(name = "lat", nullable = false)
+    private float lat;
+    @Column(name = "lon", nullable = false)
+    private float lon;
     @OneToMany(mappedBy = "event")
     private List<Request> requests;
     @Transient
     private Long views;
     @Transient
     private Long confirmedRequests;
+    @ManyToMany
+    @JoinTable(
+            name = "events_places",
+            joinColumns = @JoinColumn(name = "place_id"),
+            inverseJoinColumns = @JoinColumn(name = "event_id"))
+    private List<Place> places;
 }

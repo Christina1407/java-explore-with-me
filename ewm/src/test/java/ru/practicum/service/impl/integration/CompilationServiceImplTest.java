@@ -10,13 +10,11 @@ import org.springframework.test.annotation.DirtiesContext;
 import ru.practicum.exception.NotFoundException;
 import ru.practicum.model.Category;
 import ru.practicum.model.Event;
-import ru.practicum.model.Location;
 import ru.practicum.model.User;
 import ru.practicum.model.dto.NewCompilationDto;
 import ru.practicum.model.enums.StateEnum;
 import ru.practicum.repo.CategoryRepository;
 import ru.practicum.repo.EventRepository;
-import ru.practicum.repo.LocationRepository;
 import ru.practicum.repo.UserRepository;
 import ru.practicum.service.CompilationService;
 
@@ -38,12 +36,9 @@ class CompilationServiceImplTest {
     private UserRepository userRepository;
     @Autowired
     private CategoryRepository categoryRepository;
-    @Autowired
-    private LocationRepository locationRepository;
     private Event event;
     private User initiator;
     private Category category;
-    private Location location;
 
     @BeforeEach
     void setUp() {
@@ -51,15 +46,12 @@ class CompilationServiceImplTest {
         initiator = userRepository.save(initiator);
         category = new Category(null, "test");
         category = categoryRepository.save(category);
-        location = new Location(null, -85.1388F, 81.6359F);
-        location = locationRepository.save(location);
         event = Event.builder()
                 .annotation("Annotation teeeeeeest")
                 .category(category)
                 .description("Description teeeeeeest")
                 .eventDate(LocalDateTime.now().plusDays(5))
                 .initiator(initiator)
-                .location(location)
                 .paid(true)
                 .participantLimit(0)
                 .requestModeration(false)
