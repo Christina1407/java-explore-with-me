@@ -9,6 +9,7 @@ import lombok.Setter;
 import ru.practicum.model.enums.StateEnum;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -37,4 +38,5 @@ public class EventFullDto {
     private StateEnum state;
     private String title;
     private int views;
+    private List<PlaceDto> places;
 }

@@ -15,6 +15,7 @@ import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.NotFoundException;
 import ru.practicum.manager.CategoryManager;
 import ru.practicum.manager.EventManager;
+import ru.practicum.manager.PlaceManager;
 import ru.practicum.manager.UserManager;
 import ru.practicum.mapper.EventMapper;
 import ru.practicum.mapper.RequestMapper;
@@ -52,12 +53,14 @@ public class EventServiceImpl implements EventService {
     private final CategoryManager categoryManager;
     private final RequestMapper requestMapper;
     private final EntityManager entityManager;
+    private final PlaceManager placeManager;
 
     @Override
     public EventFullDto saveEvent(Long userId, NewEventDto newEventDto) {
         User user = userManager.findUserById(userId);
         Category category = categoryManager.findCategoryById(newEventDto.getCategory());
-        Event eventForSave = eventMapper.map(newEventDto, category, user, StateEnum.PENDING);
+        List<Place> places = placeManager.findPlaces(newEventDto.getPlaces());
+        Event eventForSave = eventMapper.map(newEventDto, category, user, StateEnum.PENDING, places);
         Event event = eventRepository.save(eventForSave);
         return eventMapper.map(event);
     }

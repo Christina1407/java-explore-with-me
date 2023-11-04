@@ -4,16 +4,13 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
-import ru.practicum.model.Category;
-import ru.practicum.model.Event;
-import ru.practicum.model.Request;
-import ru.practicum.model.User;
+import ru.practicum.model.*;
 import ru.practicum.model.dto.*;
 import ru.practicum.model.enums.StateEnum;
 
 import java.util.List;
 
-@Mapper(componentModel = "spring", uses = {RequestMapper.class}, nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+@Mapper(componentModel = "spring", uses = {RequestMapper.class, PlaceMapper.class}, nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface EventMapper {
 
     @Mapping(target = "category", source = "existCategory")
@@ -21,9 +18,10 @@ public interface EventMapper {
     @Mapping(target = "lon", source = "newEventDto.location.lon")
     @Mapping(target = "initiator", source = "user")
     @Mapping(target = "state", source = "stateEnum")
+    @Mapping(target = "places", source = "places")
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "requestModeration", defaultValue = "true")
-    Event map(NewEventDto newEventDto, Category existCategory, User user, StateEnum stateEnum);
+    Event map(NewEventDto newEventDto, Category existCategory, User user, StateEnum stateEnum, List<Place> places);
 
     @Mapping(target = "location.lat", source = "lat")
     @Mapping(target = "location.lon", source = "lon")

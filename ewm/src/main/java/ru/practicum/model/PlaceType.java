@@ -6,12 +6,12 @@ import javax.persistence.*;
 
 @Builder
 @Entity
-@Table(name = "location_type", schema = "public")
+@Table(name = "place_type", schema = "public")
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
 @Setter
-public class LocationType {
+public class PlaceType {
     @Id
     @Column(name = "type_id", nullable = false)
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -63,7 +63,7 @@ public class Event {
     @ManyToMany
     @JoinTable(
             name = "events_places",
-            joinColumns = @JoinColumn(name = "place_id"),
-            inverseJoinColumns = @JoinColumn(name = "event_id"))
+            joinColumns = @JoinColumn(name = "event_id"),
+            inverseJoinColumns = @JoinColumn(name = "place_id"))
     private List<Place> places;
 }

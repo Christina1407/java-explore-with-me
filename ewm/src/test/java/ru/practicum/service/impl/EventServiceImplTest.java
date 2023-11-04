@@ -11,6 +11,7 @@ import ru.practicum.StatClient;
 import ru.practicum.exception.NotFoundException;
 import ru.practicum.manager.CategoryManager;
 import ru.practicum.manager.EventManager;
+import ru.practicum.manager.PlaceManager;
 import ru.practicum.manager.UserManager;
 import ru.practicum.mapper.EventMapper;
 import ru.practicum.mapper.RequestMapper;
@@ -51,6 +52,8 @@ class EventServiceImplTest {
     private RequestMapper requestMapper;
     @Mock
     private EntityManager entityManager;
+    @Mock
+    private PlaceManager placeManager;
     @Captor
     ArgumentCaptor<Event> eventCaptor;
     private EventService eventService;
@@ -59,7 +62,7 @@ class EventServiceImplTest {
     @BeforeEach
     void setUp() {
         eventService = new EventServiceImpl(userManager, eventManager, eventRepository, requestRepository,
-                eventMapper, categoryManager, requestMapper, entityManager);
+                eventMapper, categoryManager, requestMapper, entityManager, placeManager);
         event = Event.builder()
                 .initiator(User.builder().id(1L).build())
                 .build();
