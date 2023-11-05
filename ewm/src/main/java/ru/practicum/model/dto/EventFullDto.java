@@ -15,7 +15,7 @@ import java.util.List;
 @Setter
 @AllArgsConstructor
 @Builder
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class EventFullDto {
     private static final String DATETIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
 

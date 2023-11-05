@@ -4,7 +4,6 @@ import lombok.*;
 import ru.practicum.model.enums.SeasonEnum;
 
 import javax.validation.constraints.*;
-import java.math.BigDecimal;
 
 @Getter
 @Setter
@@ -17,11 +16,11 @@ public class NewPlaceDto {
     @NotNull(message = "latitude is null")
     @Min(value = -90, message = "latitude cannot be less than -90")
     @Max(value = 90, message = "latitude cannot be more than 90")
-    private BigDecimal latitude;
+    private Double latitude;
     @NotNull(message = "longitude is null")
     @Min(value = -180, message = "longitude cannot be less than -180")
     @Max(value = 180, message = "longitude cannot be more than 180")
-    private BigDecimal longitude;
+    private Double longitude;
     @NotNull(message = "radius is null")
     @Min(value = 1, message = "radius cannot be less than 1 m")
     private Integer radius;

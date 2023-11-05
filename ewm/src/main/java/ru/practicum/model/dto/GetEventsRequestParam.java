@@ -3,6 +3,7 @@ package ru.practicum.model.dto;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 import org.springframework.format.annotation.DateTimeFormat;
 import ru.practicum.validation.StartBeforeEndDateValid;
 
@@ -14,6 +15,7 @@ import java.util.List;
 @NoArgsConstructor
 @StartBeforeEndDateValid
 @Setter
+@ToString
 public abstract class GetEventsRequestParam {
     private static final String DATETIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
 
@@ -23,5 +25,5 @@ public abstract class GetEventsRequestParam {
     private LocalDateTime rangeStart;
     @DateTimeFormat(pattern = DATETIME_FORMAT)
     private LocalDateTime rangeEnd;
-
+    private List<Long> places;
 }

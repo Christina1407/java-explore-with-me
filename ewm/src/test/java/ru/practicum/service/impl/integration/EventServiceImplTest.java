@@ -526,7 +526,7 @@ public class EventServiceImplTest {
         Pageable pageable = PageRequest.of(0 / 10, 10, Sort.by(Sort.Direction.ASC, "id"));
 
         //when
-        List<EventFullDto> events = eventService.findEventsByAdmin(params, pageable);
+        List<EventFullDto> events = eventService.findEventsByAdmin(params, pageable, null);
 
         //then
         assertThat(events).isNotEmpty();
@@ -592,7 +592,7 @@ public class EventServiceImplTest {
         Pageable pageable = PageRequest.of(0 / 10, 10, Sort.by(Sort.Direction.ASC, "id"));
 
         //when
-        List<EventFullDto> events = eventService.findEventsByAdmin(params, pageable);
+        List<EventFullDto> events = eventService.findEventsByAdmin(params, pageable, null);
         //then
         assertThat(events).isNotEmpty();
         assertThat(events.size()).isEqualTo(1);
@@ -602,7 +602,7 @@ public class EventServiceImplTest {
         //before
         params.setCategories(List.of(category1.getId()));
         //when
-        List<EventFullDto> events2 = eventService.findEventsByAdmin(params, pageable);
+        List<EventFullDto> events2 = eventService.findEventsByAdmin(params, pageable, null);
         //then
         assertThat(events2).isEmpty();
     }

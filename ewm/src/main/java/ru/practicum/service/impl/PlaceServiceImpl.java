@@ -16,6 +16,8 @@ import ru.practicum.repo.PlaceRepository;
 import ru.practicum.repo.PlaceTypeRepository;
 import ru.practicum.service.PlaceService;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -29,8 +31,7 @@ public class PlaceServiceImpl implements PlaceService {
     @Override
     public PlaceDto savePlace(NewPlaceDto newPlaceDto) {
         existsByName(newPlaceDto.getName());
-        PlaceType placeType = placeTypeRepository.findById(newPlaceDto.getType()).orElseThrow(() ->
-                new NotFoundException(String.format("PlaceType with id = %d was not found", newPlaceDto.getType())));
+        PlaceType placeType = getPlaceType(newPlaceDto);
         Place place = placeMapper.map(newPlaceDto, placeType);
         return placeMapper.map(placeRepository.save(place));
     }
@@ -54,9 +55,19 @@ public class PlaceServiceImpl implements PlaceService {
         return placeMapper.map(place);
     }
 
+    @Override
+    public List<PlaceDto> findPlacesByCoordinates(Double lat, Double lon) {
+        return placeMapper.map(placeManager.findPlacesByCoordinates(lat, lon));
+    }
+
     private void existsByName(String placeName) {
         if (placeRepository.existsByName(placeName)) {
             throw new ConflictException("Constraint unique_place_name", "Integrity constraint has been violated.");
         }
+    }
+
+    private PlaceType getPlaceType(NewPlaceDto newPlaceDto) {
+        return placeTypeRepository.findById(newPlaceDto.getType()).orElseThrow(() ->
+                new NotFoundException(String.format("PlaceType with id = %d was not found", newPlaceDto.getType())));
     }
 }

@@ -7,6 +7,8 @@ import ru.practicum.model.PlaceType;
 import ru.practicum.model.dto.NewPlaceDto;
 import ru.practicum.model.dto.PlaceDto;
 
+import java.util.List;
+
 @Mapper(componentModel = "spring")
 public interface PlaceMapper {
     PlaceDto map(Place place);
@@ -15,4 +17,6 @@ public interface PlaceMapper {
     @Mapping(target = "name", source = "newPlaceDto.name")
     @Mapping(target = "id", ignore = true)
     Place map(NewPlaceDto newPlaceDto, PlaceType placeType);
+
+    List<PlaceDto> map(List<Place> places);
 }

@@ -5,7 +5,6 @@ import org.hibernate.annotations.Where;
 import ru.practicum.model.enums.SeasonEnum;
 
 import javax.persistence.*;
-import java.math.BigDecimal;
 import java.util.List;
 
 @Builder
@@ -21,12 +20,12 @@ public class Place {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @Column(name = "latitude", nullable = false)
-    private BigDecimal latitude;
+    private Double latitude;
     @Column(name = "longitude", nullable = false)
-    private BigDecimal longitude;
+    private Double longitude;
     @Column(name = "radius", nullable = false)
-    private int radius;
-    @Column(name = "name", nullable = false, length = 100)
+    private Integer radius;
+    @Column(name = "name", nullable = false, unique = true, length = 100)
     private String name;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "type_id", nullable = false)
@@ -49,4 +48,6 @@ public class Place {
             joinColumns = @JoinColumn(name = "event_id"),
             inverseJoinColumns = @JoinColumn(name = "place_id"))
     private List<Event> allEvents;
+    @Transient
+    private Double distance;
 }

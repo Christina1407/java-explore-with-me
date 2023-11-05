@@ -11,6 +11,7 @@ import java.util.List;
 @Setter
 @Builder
 @AllArgsConstructor
+@ToString(callSuper = true)
 public class ParamsForAdmin extends GetEventsRequestParam {
     private List<Long> users;
     private List<StateEnum> states;

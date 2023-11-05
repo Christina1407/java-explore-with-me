@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import ru.practicum.exception.ConflictException;
 import ru.practicum.model.dto.EventFullDto;
 import ru.practicum.model.dto.ParamsForAdmin;
+import ru.practicum.model.dto.SearchArea;
 import ru.practicum.model.dto.UpdateEventRequest;
 import ru.practicum.model.enums.StateActionEnum;
 import ru.practicum.service.EventService;
@@ -45,11 +46,12 @@ public class EventAdminController {
 
     @GetMapping
     public List<EventFullDto> findEventsByAdmin(@Valid ParamsForAdmin params,
-                                                @RequestParam(name = "from", defaultValue = "0") @Min(0) int from,
+                                                @Valid SearchArea searchArea,
+                                                @RequestParam(name = "from", defaultValue = "0")@Min(0) int from,
                                                 @RequestParam(name = "size", defaultValue = "10") @Min(1) int size) {
 
-        log.info("Получение администратором данных по параметрам = {}", params);
+        log.info("Получение администратором данных по параметрам = {} {}", params, searchArea);
         Pageable pageable = PageRequest.of(from / size, size, Sort.by(Sort.Direction.ASC, "id"));
-        return eventService.findEventsByAdmin(params, pageable);
+        return eventService.findEventsByAdmin(params, pageable, searchArea);
     }
 }

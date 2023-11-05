@@ -25,5 +25,5 @@ public interface EventService {
 
     List<EventShortDto> findInitiatorEvents(Long userId, Pageable pageable);
 
-    List<EventFullDto> findEventsByAdmin(ParamsForAdmin params, Pageable pageable);
+    List<EventFullDto> findEventsByAdmin(ParamsForAdmin params, Pageable pageable, SearchArea searchArea);
 }

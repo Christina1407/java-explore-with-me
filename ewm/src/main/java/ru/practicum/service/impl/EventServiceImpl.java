@@ -59,7 +59,10 @@ public class EventServiceImpl implements EventService {
     public EventFullDto saveEvent(Long userId, NewEventDto newEventDto) {
         User user = userManager.findUserById(userId);
         Category category = categoryManager.findCategoryById(newEventDto.getCategory());
+        //проверка, что заданные места есть в базе
         List<Place> places = placeManager.findPlaces(newEventDto.getPlaces());
+        //проверка, что координаты попадают в область покрытия мест
+        placeManager.checkPlaces(newEventDto.getLocation().getLat(), newEventDto.getLocation().getLon(), places);
         Event eventForSave = eventMapper.map(newEventDto, category, user, StateEnum.PENDING, places);
         Event event = eventRepository.save(eventForSave);
         return eventMapper.map(event);
@@ -149,15 +152,15 @@ public class EventServiceImpl implements EventService {
     public List<EventShortDto> findInitiatorEvents(Long userId, Pageable pageable) {
         userManager.findUserById(userId);
         List<Event> events = eventRepository.findByInitiatorId(userId, pageable);
-
         eventManager.enrichEventsByViews(events);
         eventManager.enrichEventsByConfirmedRequests(events);
         return eventMapper.mapToEventShortDtoList(events);
     }
 
     @Override
-    public List<EventFullDto> findEventsByAdmin(ParamsForAdmin params, Pageable pageable) {
+    public List<EventFullDto> findEventsByAdmin(ParamsForAdmin params, Pageable pageable, SearchArea searchArea) {
         List<Event> events = eventRepository.findAll(getPredicateByParamsForAdmin(params), pageable).getContent();
+        events = filterEventsBySearchArea(events, searchArea);
         eventManager.enrichEventsByViews(events);
         eventManager.enrichEventsByConfirmedRequests(events);
         return eventMapper.mapToEventFullDtoList(events);
@@ -353,6 +356,9 @@ public class EventServiceImpl implements EventService {
         if (nonNull(params.getRangeStart()) && nonNull(params.getRangeEnd())) {
             where.and(QEvent.event.eventDate.between(params.getRangeStart(), params.getRangeEnd()));
         }
+        if (!CollectionUtils.isEmpty(params.getPlaces())) {
+            where.and(QEvent.event.places.any().id.in(params.getPlaces()));
+        }
     }
 
     private Predicate getPredicateByParamsForAdmin(ParamsForAdmin params) {
@@ -411,5 +417,17 @@ public class EventServiceImpl implements EventService {
             where.and(QEvent.event.id.notIn(eventId));
         }
         return where;
+    }
+
+    private List<Event> filterEventsBySearchArea(List<Event> events, SearchArea searchArea) {
+        if (isNull(searchArea.getLat()) && isNull(searchArea.getLon()) && isNull(searchArea.getRadius())) {
+            return events;
+        }
+        if (isNull(searchArea.getLat()) || isNull(searchArea.getLon()) || isNull(searchArea.getRadius())) {
+            log.error("{} must have all fields", searchArea);
+            throw new ConflictException(String.format("%s must have all fields", searchArea),
+                    "For the requested operation the conditions are not met.");
+        }
+        return placeManager.filterEventsInSearchArea(searchArea, events);
     }
 }

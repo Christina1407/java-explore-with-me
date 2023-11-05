@@ -10,7 +10,10 @@ import ru.practicum.model.dto.PlaceDto;
 import ru.practicum.service.PlaceService;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
+import java.util.List;
 
 @RestController
 @RequestMapping(path = "/admin/places")
@@ -38,5 +41,12 @@ public class PlaceAdminController {
     public PlaceDto findPlaceById(@PathVariable @Min(1) Long placeId) {
         log.info("Get place id = {}", placeId);
         return placeService.findPlaceById(placeId);
+    }
+
+    @GetMapping
+    public List<PlaceDto> findPlacesByCoordinates(@RequestParam(name = "lat") @NotNull @Min(-90) @Max(90) Double lat,
+                                                  @RequestParam(name = "lon") @NotNull @Min(-180) @Max(180) Double lon) {
+        log.info("Get places by coordinates lat = {} lon = {}", lat, lon);
+        return placeService.findPlacesByCoordinates(lat, lon);
     }
 }

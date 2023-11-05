@@ -7,7 +7,6 @@ import lombok.Getter;
 import lombok.Setter;
 import ru.practicum.model.enums.SeasonEnum;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 @Getter
@@ -18,12 +17,13 @@ import java.util.List;
 public class PlaceDto {
 
     private Long id;
-    private BigDecimal latitude;
-    private BigDecimal longitude;
+    private Double latitude;
+    private Double longitude;
     private Integer radius;
     private String name;
     private PlaceTypeDto type;
     private SeasonEnum season;
     private String feature;
     private List<EventShortDto> events;
+    private Double distance;
 }

@@ -51,9 +51,9 @@ public class Event {
     @Enumerated(EnumType.STRING)
     private StateEnum state;
     @Column(name = "lat", nullable = false)
-    private float lat;
+    private Double lat;
     @Column(name = "lon", nullable = false)
-    private float lon;
+    private Double lon;
     @OneToMany(mappedBy = "event")
     private List<Request> requests;
     @Transient
@@ -66,4 +66,6 @@ public class Event {
             joinColumns = @JoinColumn(name = "event_id"),
             inverseJoinColumns = @JoinColumn(name = "place_id"))
     private List<Place> places;
+    @Transient
+    private Double distance;
 }
