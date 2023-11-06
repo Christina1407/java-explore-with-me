@@ -2,6 +2,7 @@ package ru.practicum.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.exception.ConflictException;
@@ -12,11 +13,14 @@ import ru.practicum.model.Place;
 import ru.practicum.model.PlaceType;
 import ru.practicum.model.dto.NewPlaceDto;
 import ru.practicum.model.dto.PlaceDto;
+import ru.practicum.model.dto.UpdatePlaceDto;
 import ru.practicum.repo.PlaceRepository;
 import ru.practicum.repo.PlaceTypeRepository;
 import ru.practicum.service.PlaceService;
 
 import java.util.List;
+
+import static java.util.Objects.nonNull;
 
 @Service
 @RequiredArgsConstructor
@@ -31,7 +35,7 @@ public class PlaceServiceImpl implements PlaceService {
     @Override
     public PlaceDto savePlace(NewPlaceDto newPlaceDto) {
         existsByName(newPlaceDto.getName());
-        PlaceType placeType = getPlaceType(newPlaceDto);
+        PlaceType placeType = getPlaceType(newPlaceDto.getType());
         Place place = placeMapper.map(newPlaceDto, placeType);
         return placeMapper.map(placeRepository.save(place));
     }
@@ -50,14 +54,38 @@ public class PlaceServiceImpl implements PlaceService {
 
     @Override
     @Transactional(readOnly = true)
-    public PlaceDto findPlaceById(Long placeId) {
+    public PlaceDto findPlaceById(Long placeId, boolean isPublic) {
         Place place = placeManager.findPlaceByIdOrThrow(placeId);
-        return placeMapper.map(place);
+        if (isPublic) {
+           return placeMapper.mapWithPublishedEvents(place);
+        }
+        return placeMapper.mapWithAllEvents(place);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<PlaceDto> findPlacesByCoordinates(Double lat, Double lon) {
         return placeMapper.map(placeManager.findPlacesByCoordinates(lat, lon));
+    }
+
+    @Override
+    public PlaceDto updatePlace(UpdatePlaceDto updatePlaceDto, Long placeId) {
+        Place placeForUpdate = placeManager.findPlaceByIdOrThrow(placeId);
+        if (nonNull(updatePlaceDto.getName())) {
+            existsByName(updatePlaceDto.getName());
+        }
+        PlaceType placeType = null;
+        if (nonNull(updatePlaceDto.getType())) {
+           placeType = getPlaceType(updatePlaceDto.getType());
+        }
+         placeMapper.update(updatePlaceDto, placeType, placeForUpdate);
+        return placeMapper.map(placeForUpdate);
+    }
+
+    @Override
+    public List<PlaceDto> getAllPlaces(Pageable pageable) {
+        List<Place> places = placeRepository.findAll(pageable).getContent();
+        return placeMapper.mapWithPublishedEvents(places);
     }
 
     private void existsByName(String placeName) {
@@ -66,8 +94,8 @@ public class PlaceServiceImpl implements PlaceService {
         }
     }
 
-    private PlaceType getPlaceType(NewPlaceDto newPlaceDto) {
-        return placeTypeRepository.findById(newPlaceDto.getType()).orElseThrow(() ->
-                new NotFoundException(String.format("PlaceType with id = %d was not found", newPlaceDto.getType())));
+    private PlaceType getPlaceType(Long placeTypeId) {
+        return placeTypeRepository.findById(placeTypeId).orElseThrow(() ->
+                new NotFoundException(String.format("PlaceType with id = %d was not found", placeTypeId)));
     }
 }

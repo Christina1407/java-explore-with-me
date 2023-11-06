@@ -10,6 +10,8 @@ import ru.practicum.model.Place;
 import ru.practicum.model.dto.SearchArea;
 import ru.practicum.repo.PlaceRepository;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -49,7 +51,7 @@ public class PlaceManager {
                     if (distance > place.getRadius()) {
                         return false;
                     } else {
-                        place.setDistance(distance);
+                        place.setDistance(BigDecimal.valueOf(distance).setScale(2, RoundingMode.HALF_UP).doubleValue());
                         return true;
                     }
                 })
@@ -65,7 +67,7 @@ public class PlaceManager {
                     if (distance > searchArea.getRadius()) {
                         return false;
                     }
-                    event.setDistance(distance);
+                    event.setDistance(BigDecimal.valueOf(distance).setScale(2, RoundingMode.HALF_UP).doubleValue());
                     return true;
                 })
                 .sorted(Comparator.comparingDouble(Event::getDistance))

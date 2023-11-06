@@ -7,6 +7,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.model.dto.NewPlaceDto;
 import ru.practicum.model.dto.PlaceDto;
+import ru.practicum.model.dto.UpdatePlaceDto;
 import ru.practicum.service.PlaceService;
 
 import javax.validation.Valid;
@@ -37,10 +38,17 @@ public class PlaceAdminController {
         placeService.deletePlace(placeId);
     }
 
+    @PatchMapping("{placeId}")
+    public PlaceDto updatePlace(@PathVariable("placeId") @Min(1) Long placeId,
+                                @RequestBody @Valid UpdatePlaceDto updatePlaceDto) {
+        log.info("Попытка обновления place {} id = {}", updatePlaceDto, placeId);
+        return placeService.updatePlace(updatePlaceDto, placeId);
+    }
+
     @GetMapping("/{placeId}")
     public PlaceDto findPlaceById(@PathVariable @Min(1) Long placeId) {
         log.info("Get place id = {}", placeId);
-        return placeService.findPlaceById(placeId);
+        return placeService.findPlaceById(placeId, false);
     }
 
     @GetMapping

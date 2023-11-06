@@ -2,14 +2,12 @@ package ru.practicum.controller.publicity;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.model.dto.EventFullDto;
 import ru.practicum.model.dto.EventShortDto;
 import ru.practicum.model.dto.ParamsForPublic;
+import ru.practicum.model.dto.SearchArea;
 import ru.practicum.model.enums.SortEnum;
 import ru.practicum.service.EventService;
 
@@ -27,12 +25,12 @@ public class EventPublicController {
 
     @GetMapping
     public List<EventShortDto> findEventsPublic(@Valid ParamsForPublic params,
+                                                @Valid SearchArea searchArea,
                                                 @RequestParam(name = "from", defaultValue = "0") @Min(0) int from,
                                                 @RequestParam(name = "size", defaultValue = "10") @Min(1) int size,
                                                 @RequestParam(name = "sort", defaultValue = "EVENT_DATE") SortEnum sort) {
-        Pageable pageable = PageRequest.of(from / size, size, Sort.by(Sort.Direction.ASC, sort.getName()));
-        log.info("Get events params {} from = {} size = {} sort = {}", params, from, size, sort);
-        return eventService.findEventsPublic(params, pageable);
+        log.info("Get events params {} searchArea = {} from = {} size = {} sort = {}", params, searchArea, from, size, sort);
+        return eventService.findEventsPublic(params, searchArea, from, size, sort);
     }
 
     @GetMapping("/{eventId}")

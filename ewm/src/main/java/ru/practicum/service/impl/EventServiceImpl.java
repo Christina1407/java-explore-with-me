@@ -6,7 +6,7 @@ import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -21,6 +21,7 @@ import ru.practicum.mapper.EventMapper;
 import ru.practicum.mapper.RequestMapper;
 import ru.practicum.model.*;
 import ru.practicum.model.dto.*;
+import ru.practicum.model.enums.SortEnum;
 import ru.practicum.model.enums.StateActionEnum;
 import ru.practicum.model.enums.StateEnum;
 import ru.practicum.model.enums.StatusEnum;
@@ -103,12 +104,34 @@ public class EventServiceImpl implements EventService {
     @Override
     @Transactional(readOnly = true)
     @SaveStatistic
-    public List<EventShortDto> findEventsPublic(ParamsForPublic params, Pageable pageable) {
-        //информацию о том, что по этому эндпоинту был осуществлен и обработан запрос, нужно сохранить в сервисе статистики
+    //информацию о том, что по этому эндпоинту был осуществлен и обработан запрос, нужно сохранить в сервисе статистики
+    //информация о каждом событии должна включать в себя количество просмотров и количество уже одобренных заявок на участие
+    public List<EventShortDto> findEventsPublic(ParamsForPublic params, SearchArea searchArea, int from, int size, SortEnum sort) {
+        Pageable pageable = PageRequest.of(from / size, size);
+        List<Event> events = new ArrayList<>();
 
-        List<Event> events = eventRepository.findAll(getPredicateByParamsForPublic(params), pageable).getContent();
-        //информация о каждом событии должна включать в себя количество просмотров и количество уже одобренных заявок на участие
-        eventManager.enrichEventsByViews(events);
+        if (sort.equals(SortEnum.VIEWS)) {
+            //Получаем все события с учётом фильтров без пагинации
+            eventRepository.findAll(getPredicateByParamsForPublic(params)).forEach(events::add);
+            //Если задана область поиска, выбираем события, которые в неё попадают
+            events = filterEventsBySearchArea(events, searchArea);
+            //Добавляем просмотры
+            eventManager.enrichEventsByViews(events);
+            //Сортируем по количеству просмотров
+            events.sort(Comparator.comparingLong(Event::getViews).reversed());
+            //Выбираем необходимую страницу
+            events = createPageContentFromEvents(events, pageable);
+        } else {
+            //Получаем все события с учётом фильтров без пагинации, отсортированные по дате события
+            eventRepository.findAll(getPredicateByParamsForPublic(params), Sort.by(Sort.Direction.ASC, sort.getName())).forEach(events::add);
+            //Если задана область поиска, выбираем события, которые в неё попадают
+            events = filterEventsBySearchArea(events, searchArea);
+            //Выбираем необходимую страницу
+            events = createPageContentFromEvents(events, pageable);
+            //Добавляем просмотры
+            eventManager.enrichEventsByViews(events);
+        }
+        //Добавляем подтвержденные заявки
         eventManager.enrichEventsByConfirmedRequests(events);
         return eventMapper.mapToEventShortDtoList(events);
     }
@@ -159,8 +182,14 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public List<EventFullDto> findEventsByAdmin(ParamsForAdmin params, Pageable pageable, SearchArea searchArea) {
-        List<Event> events = eventRepository.findAll(getPredicateByParamsForAdmin(params), pageable).getContent();
+        List<Event> events = new ArrayList<>();
+        //Получаем все события, подходящие под условия, отсортированные по id
+        eventRepository.findAll(getPredicateByParamsForAdmin(params), pageable.getSort()).forEach(events::add);
+        //Если задана searchArea, то выбираем из найденных событий те, которые попадают в область поиска
         events = filterEventsBySearchArea(events, searchArea);
+        //Берём требуемую страницу
+        events = createPageContentFromEvents(events, pageable);
+        //Добавляем просмотры и подтверждённые заявки
         eventManager.enrichEventsByViews(events);
         eventManager.enrichEventsByConfirmedRequests(events);
         return eventMapper.mapToEventFullDtoList(events);
@@ -175,6 +204,36 @@ public class EventServiceImpl implements EventService {
 
         //Если меняется лимит участников(не на значение 0), то он не может быть меньше кол-ва уже подтверждённых заявок
         checkNewParticipantLimit(eventId, updateEventAdminRequest, eventForUpdate);
+
+        //TODO
+        //Изменение координат и мест
+        LocationDto location = updateEventAdminRequest.getLocation();
+        List<Long> places = updateEventAdminRequest.getPlaces();
+
+        //меняется location, places null
+        if (nonNull(location)) {
+            if (!eventForUpdate.getLat().equals(location.getLat()) || !eventForUpdate.getLon().equals(location.getLon())) {
+                if (isNull(places)) {
+                    //проверка, что новые координаты попадают в область покрытия мест, которые уже были у события
+                    placeManager.checkPlaces(location.getLat(), location.getLon(), eventForUpdate.getPlaces());
+                }
+                // places меняются
+                if (!places.isEmpty()) {
+                    //проверка, что новые места есть в базе
+                    List<Place> updatePlaces = placeManager.findPlaces(places);
+                    //проверка, что новые координаты попадают в область покрытия новых мест
+                    placeManager.checkPlaces(location.getLat(), location.getLon(), updatePlaces);
+                }
+            }
+        } else {
+            //не меняется location, меняются places
+            if (nonNull(places) && !places.isEmpty()) {
+                //проверка, что новые места есть в базе
+                List<Place> updatePlaces = placeManager.findPlaces(places);
+                //проверка, что старые координаты попадают в область покрытия новых мест
+                placeManager.checkPlaces(eventForUpdate.getLat(), eventForUpdate.getLon(), updatePlaces);
+            }
+        }
 
         //Новое состояние события
         StateActionEnum stateAction = updateEventAdminRequest.getStateAction();
@@ -429,5 +488,12 @@ public class EventServiceImpl implements EventService {
                     "For the requested operation the conditions are not met.");
         }
         return placeManager.filterEventsInSearchArea(searchArea, events);
+    }
+
+    private List<Event> createPageContentFromEvents(List<Event> events, Pageable pageable) {
+        final int start = (int) pageable.getOffset();
+        final int end = Math.min((start + pageable.getPageSize()), events.size());
+        final Page<Event> page = new PageImpl<>(events.subList(start, end), pageable, events.size());
+        return page.getContent();
     }
 }

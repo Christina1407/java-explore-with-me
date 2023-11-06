@@ -15,7 +15,7 @@ import java.util.List;
 @Setter
 @AllArgsConstructor
 @Builder
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class EventFullDto {
     private static final String DATETIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
 
@@ -39,4 +39,5 @@ public class EventFullDto {
     private String title;
     private int views;
     private List<PlaceDto> places;
+    private Double distance;
 }

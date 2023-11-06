@@ -39,14 +39,14 @@ public class Place {
     @Where(clause = "state = 'PUBLISHED'")
     @JoinTable(
             name = "events_places",
-            joinColumns = @JoinColumn(name = "event_id"),
-            inverseJoinColumns = @JoinColumn(name = "place_id"))
+            joinColumns = @JoinColumn(name = "place_id"),
+            inverseJoinColumns = @JoinColumn(name = "event_id"))
     private List<Event> publishedEvents;
     @ManyToMany
     @JoinTable(
             name = "events_places",
-            joinColumns = @JoinColumn(name = "event_id"),
-            inverseJoinColumns = @JoinColumn(name = "place_id"))
+            joinColumns = @JoinColumn(name = "place_id"),
+            inverseJoinColumns = @JoinColumn(name = "event_id"))
     private List<Event> allEvents;
     @Transient
     private Double distance;

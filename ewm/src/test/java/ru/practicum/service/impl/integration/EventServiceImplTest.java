@@ -209,7 +209,7 @@ public class EventServiceImplTest {
         Pageable pageable = PageRequest.of(0 / 10, 10, Sort.by(Sort.Direction.ASC, SortEnum.EVENT_DATE.getName()));
 
         //when
-        List<EventShortDto> events = eventService.findEventsPublic(paramsForPublic, pageable);
+        List<EventShortDto> events = eventService.findEventsPublic(paramsForPublic, null, 0, 10, SortEnum.EVENT_DATE);
         //then
         assertThat(events).isNotEmpty();
         assertThat(events.size()).isEqualTo(2);
@@ -460,7 +460,7 @@ public class EventServiceImplTest {
         Pageable pageable = PageRequest.of(0 / 10, 10, Sort.by(Sort.Direction.ASC, SortEnum.EVENT_DATE.getName()));
 
         //when
-        List<EventShortDto> events = eventService.findEventsPublic(paramsForPublic, pageable);
+        List<EventShortDto> events = eventService.findEventsPublic(paramsForPublic, null, 0, 10, SortEnum.EVENT_DATE);
         //then
         assertThat(events).isNotEmpty();
         assertThat(events.size()).isEqualTo(5);
