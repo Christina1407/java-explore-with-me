@@ -153,6 +153,11 @@ public class EventServiceImpl implements EventService {
         //Дата и время, на которые намечено событие не может быть раньше, чем через два часа от текущего момента
         checkEventDate(updateEventUserRequest, 2);
 
+        //Проверка координат и мест при их изменении
+        LocationDto location = updateEventUserRequest.getLocation();
+        List<Long> placesIds = updateEventUserRequest.getPlaces();
+        List<Place> places = checkLocationAndPlaces(location, placesIds, eventForUpdate);
+
         //Новое состояние события
         StateActionEnum stateAction = updateEventUserRequest.getStateAction();
         if (nonNull(stateAction)) {
@@ -166,7 +171,7 @@ public class EventServiceImpl implements EventService {
         //Если прилетел айдишник категории, проверяем, что есть такая категория
         Category category = getCategory(updateEventUserRequest);
 
-        eventMapper.update(updateEventUserRequest, category, eventForUpdate);
+        eventMapper.update(updateEventUserRequest, category, eventForUpdate, places);
         return eventMapper.map(eventForUpdate);
     }
 
@@ -205,35 +210,10 @@ public class EventServiceImpl implements EventService {
         //Если меняется лимит участников(не на значение 0), то он не может быть меньше кол-ва уже подтверждённых заявок
         checkNewParticipantLimit(eventId, updateEventAdminRequest, eventForUpdate);
 
-        //TODO
-        //Изменение координат и мест
+        //Проверка координат и мест при их изменении
         LocationDto location = updateEventAdminRequest.getLocation();
-        List<Long> places = updateEventAdminRequest.getPlaces();
-
-        //меняется location, places null
-        if (nonNull(location)) {
-            if (!eventForUpdate.getLat().equals(location.getLat()) || !eventForUpdate.getLon().equals(location.getLon())) {
-                if (isNull(places)) {
-                    //проверка, что новые координаты попадают в область покрытия мест, которые уже были у события
-                    placeManager.checkPlaces(location.getLat(), location.getLon(), eventForUpdate.getPlaces());
-                }
-                // places меняются
-                if (!places.isEmpty()) {
-                    //проверка, что новые места есть в базе
-                    List<Place> updatePlaces = placeManager.findPlaces(places);
-                    //проверка, что новые координаты попадают в область покрытия новых мест
-                    placeManager.checkPlaces(location.getLat(), location.getLon(), updatePlaces);
-                }
-            }
-        } else {
-            //не меняется location, меняются places
-            if (nonNull(places) && !places.isEmpty()) {
-                //проверка, что новые места есть в базе
-                List<Place> updatePlaces = placeManager.findPlaces(places);
-                //проверка, что старые координаты попадают в область покрытия новых мест
-                placeManager.checkPlaces(eventForUpdate.getLat(), eventForUpdate.getLon(), updatePlaces);
-            }
-        }
+        List<Long> placesIds = updateEventAdminRequest.getPlaces();
+        List<Place> places = checkLocationAndPlaces(location, placesIds, eventForUpdate);
 
         //Новое состояние события
         StateActionEnum stateAction = updateEventAdminRequest.getStateAction();
@@ -250,7 +230,7 @@ public class EventServiceImpl implements EventService {
         //Если прилетел айдишник категории, проверяем, что такая категория есть
         Category category = getCategory(updateEventAdminRequest);
 
-        eventMapper.update(updateEventAdminRequest, category, eventForUpdate);
+        eventMapper.update(updateEventAdminRequest, category, eventForUpdate, places);
         eventManager.enrichEventByViews(eventForUpdate);
         eventManager.enrichEventByConfirmedRequests(eventForUpdate);
         return eventMapper.map(eventForUpdate);
@@ -399,6 +379,55 @@ public class EventServiceImpl implements EventService {
             category = categoryManager.findCategoryById(updateEventRequest.getCategory());
         }
         return category;
+    }
+
+    private List<Place> checkLocationAndPlaces(LocationDto location, List<Long> placesIds, Event eventForUpdate) {
+        List<Place> places = null;
+        List<Long> oldPlaces = eventForUpdate.getPlaces().stream()
+                .map(Place::getId)
+                .collect(Collectors.toList());
+
+        //location не null
+        if (nonNull(location)) {
+            //локация меняется
+            if (!eventForUpdate.getLat().equals(location.getLat()) || !eventForUpdate.getLon().equals(location.getLon())) {
+                //places null
+                if (isNull(placesIds)) {
+                    //проверка, что новые координаты попадают в область покрытия мест, которые уже были у события
+                    placeManager.checkPlaces(location.getLat(), location.getLon(), eventForUpdate.getPlaces());
+                } else {
+                    //placesIds не null
+                    places = getPlaces(location.getLat(), location.getLon(), placesIds, oldPlaces);
+                }
+            } else {
+                //локация не меняется
+                //placesIds не null
+                places = getPlaces(location.getLat(), location.getLon(), placesIds, oldPlaces);
+            }
+        } else {
+            //location null, placesIds не null
+            places = getPlaces(eventForUpdate.getLat(), eventForUpdate.getLon(), placesIds, oldPlaces);
+        }
+        return places;
+    }
+
+    private List<Place> getPlaces(Double lat, Double lon, List<Long> placesIds, List<Long> oldPlaces) {
+        List<Place> places = null;
+        if (nonNull(placesIds)) {
+            //places не пустые и меняются
+            if (!placesIds.isEmpty()) {
+                if (!org.apache.commons.collections4.CollectionUtils.isEqualCollection(placesIds, oldPlaces)) {
+                    //проверка, что места есть в базе
+                    places = placeManager.findPlaces(placesIds);
+                    //проверка, что координаты попадают в область покрытия новых мест
+                    placeManager.checkPlaces(lat, lon, places);
+                }
+            } else {
+                //удаление мест из события
+                places = new ArrayList<>();
+            }
+        }
+        return places;
     }
 
     //общая часть админ и паблик

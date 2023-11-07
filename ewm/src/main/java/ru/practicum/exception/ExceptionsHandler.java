@@ -15,13 +15,14 @@ import ru.practicum.controller.privacy.RequestsController;
 import ru.practicum.controller.publicity.CategoryPublicController;
 import ru.practicum.controller.publicity.CompilationPublicController;
 import ru.practicum.controller.publicity.EventPublicController;
+import ru.practicum.controller.publicity.PlacePublicController;
 
 import javax.validation.ConstraintViolationException;
 import java.time.LocalDateTime;
 
 @RestControllerAdvice(assignableTypes = {UserController.class, CategoryAdminController.class, CategoryPublicController.class,
         EventPrivateController.class, EventPublicController.class, EventAdminController.class, RequestsController.class,
-        CompilationAdminController.class, CompilationPublicController.class, PlaceAdminController.class})
+        CompilationAdminController.class, CompilationPublicController.class, PlaceAdminController.class, PlacePublicController.class})
 public class ExceptionsHandler {
 
     @ExceptionHandler

@@ -2,6 +2,7 @@ package ru.practicum.service;
 
 import org.springframework.data.domain.Pageable;
 import ru.practicum.model.dto.NewPlaceDto;
+import ru.practicum.model.dto.ParamSearchPlace;
 import ru.practicum.model.dto.PlaceDto;
 import ru.practicum.model.dto.UpdatePlaceDto;
 
@@ -18,5 +19,7 @@ public interface PlaceService {
 
     PlaceDto updatePlace(UpdatePlaceDto updatePlaceDto, Long placeId);
 
-    List<PlaceDto> getAllPlaces(Pageable pageable);
+    List<PlaceDto> findAllPlaces(Pageable pageable, boolean isPublic);
+
+    List<PlaceDto> findPlacesWithFilters(ParamSearchPlace params, Pageable pageable);
 }

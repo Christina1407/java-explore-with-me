@@ -24,7 +24,7 @@ public class PlacePublicController {
     public List<PlaceDto> getAllPlaces(@RequestParam(name = "from", defaultValue = "0") @Min(0) int from,
                                        @RequestParam(name = "size", defaultValue = "10") @Min(1) int size) {
         Pageable pageable = PageRequest.of(from / size, size);
-        return placeService.getAllPlaces(pageable);
+        return placeService.findAllPlaces(pageable, true);
     }
 
     @GetMapping("/{placeId}")

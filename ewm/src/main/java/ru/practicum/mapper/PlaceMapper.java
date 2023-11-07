@@ -12,6 +12,7 @@ import java.util.List;
 @Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface PlaceMapper {
     PlaceDto map(Place place);
+
     @Mapping(target = "events", source = "publishedEvents")
     @Named(value = "published")
     PlaceDto mapWithPublishedEvents(Place place);
@@ -19,6 +20,10 @@ public interface PlaceMapper {
     @IterableMapping(qualifiedByName = "published")
     @Named(value = "PlaceList with published events")
     List<PlaceDto> mapWithPublishedEvents(List<Place> places);
+
+    @IterableMapping(qualifiedByName = "all")
+    @Named(value = "PlaceList with all events")
+    List<PlaceDto> mapWithAllEvents(List<Place> places);
 
     @Named(value = "all")
     @Mapping(target = "events", source = "allEvents")

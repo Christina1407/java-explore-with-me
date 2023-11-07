@@ -1,25 +1,33 @@
 package ru.practicum.service.impl;
 
+import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import ru.practicum.exception.ConflictException;
 import ru.practicum.exception.NotFoundException;
 import ru.practicum.manager.PlaceManager;
 import ru.practicum.mapper.PlaceMapper;
 import ru.practicum.model.Place;
 import ru.practicum.model.PlaceType;
+import ru.practicum.model.QPlace;
 import ru.practicum.model.dto.NewPlaceDto;
+import ru.practicum.model.dto.ParamSearchPlace;
 import ru.practicum.model.dto.PlaceDto;
 import ru.practicum.model.dto.UpdatePlaceDto;
+import ru.practicum.model.enums.CompareEnum;
+import ru.practicum.model.enums.SeasonEnum;
 import ru.practicum.repo.PlaceRepository;
 import ru.practicum.repo.PlaceTypeRepository;
 import ru.practicum.service.PlaceService;
 
 import java.util.List;
 
+import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
 @Service
@@ -35,6 +43,7 @@ public class PlaceServiceImpl implements PlaceService {
     @Override
     public PlaceDto savePlace(NewPlaceDto newPlaceDto) {
         existsByName(newPlaceDto.getName());
+        existsByCoordinates(newPlaceDto.getLatitude(), newPlaceDto.getLongitude());
         PlaceType placeType = getPlaceType(newPlaceDto.getType());
         Place place = placeMapper.map(newPlaceDto, placeType);
         return placeMapper.map(placeRepository.save(place));
@@ -56,10 +65,9 @@ public class PlaceServiceImpl implements PlaceService {
     @Transactional(readOnly = true)
     public PlaceDto findPlaceById(Long placeId, boolean isPublic) {
         Place place = placeManager.findPlaceByIdOrThrow(placeId);
-        if (isPublic) {
-           return placeMapper.mapWithPublishedEvents(place);
-        }
-        return placeMapper.mapWithAllEvents(place);
+        return isPublic ?
+                placeMapper.mapWithPublishedEvents(place) :
+                placeMapper.mapWithAllEvents(place);
     }
 
     @Override
@@ -76,16 +84,37 @@ public class PlaceServiceImpl implements PlaceService {
         }
         PlaceType placeType = null;
         if (nonNull(updatePlaceDto.getType())) {
-           placeType = getPlaceType(updatePlaceDto.getType());
+            placeType = getPlaceType(updatePlaceDto.getType());
         }
-         placeMapper.update(updatePlaceDto, placeType, placeForUpdate);
+        placeMapper.update(updatePlaceDto, placeType, placeForUpdate);
         return placeMapper.map(placeForUpdate);
     }
 
     @Override
-    public List<PlaceDto> getAllPlaces(Pageable pageable) {
+    public List<PlaceDto> findAllPlaces(Pageable pageable, boolean isPublic) {
         List<Place> places = placeRepository.findAll(pageable).getContent();
-        return placeMapper.mapWithPublishedEvents(places);
+        return (isPublic) ?
+                placeMapper.mapWithPublishedEvents(places) :
+                placeMapper.mapWithAllEvents(places);
+    }
+
+    @Override
+    public List<PlaceDto> findPlacesWithFilters(ParamSearchPlace params, Pageable pageable) {
+        validateParams(params);
+        List<Place> places = placeRepository.findAll(getPredicateByParams(params), pageable).getContent();
+        return placeMapper.mapWithAllEvents(places);
+    }
+
+    private void validateParams(ParamSearchPlace params) {
+        if (nonNull(params.getCompareRadius()) && isNull(params.getRadius())) {
+            throw new ConflictException("test", "test"); // FIXME!!!
+        }
+        if (isNull(params.getCompareRadius())) {
+            params.setCompareRadius(CompareEnum.EQUAL);
+        }
+        if (isNull(params.getSeason())) {
+            params.setSeason(SeasonEnum.ALL);
+        }
     }
 
     private void existsByName(String placeName) {
@@ -93,9 +122,40 @@ public class PlaceServiceImpl implements PlaceService {
             throw new ConflictException("Constraint unique_place_name", "Integrity constraint has been violated.");
         }
     }
+    private void existsByCoordinates(Double latitude, Double longitude) {
+        if (placeRepository.existsByLatitudeAndLongitude(latitude, longitude)) {
+            throw new ConflictException(String.format("Место с координатами lat = %f и lon = %f уже есть в базе", latitude, latitude),
+                    "Integrity constraint has been violated.");
+        }
+    }
 
     private PlaceType getPlaceType(Long placeTypeId) {
         return placeTypeRepository.findById(placeTypeId).orElseThrow(() ->
                 new NotFoundException(String.format("PlaceType with id = %d was not found", placeTypeId)));
     }
+
+    private Predicate getPredicateByParams(ParamSearchPlace params) {
+        BooleanBuilder where = new BooleanBuilder();
+        if (nonNull(params.getText())) {
+            where.and(QPlace.place.name.containsIgnoreCase(params.getText())
+                    .or(QPlace.place.feature.containsIgnoreCase(params.getText())));
+        }
+        if (!CollectionUtils.isEmpty(params.getTypes())) {
+            where.and(QPlace.place.type.id.in(params.getTypes()));
+        }
+        if (nonNull(params.getRadius())) {
+            if (params.getCompareRadius().equals(CompareEnum.EQUAL)) {
+                where.and(QPlace.place.radius.eq(params.getRadius()));
+            } else if (params.getCompareRadius().equals(CompareEnum.GT)) {
+                where.and(QPlace.place.radius.gt(params.getRadius()));
+            } else if (params.getCompareRadius().equals(CompareEnum.LT)) {
+                where.and(QPlace.place.radius.lt(params.getRadius()));
+            }
+        }
+        if (nonNull(params.getSeason())) {
+            where.and(QPlace.place.season.eq(params.getSeason()));
+        }
+        return where;
+    }
+
 }

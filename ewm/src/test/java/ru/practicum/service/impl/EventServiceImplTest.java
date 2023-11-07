@@ -93,7 +93,7 @@ class EventServiceImplTest {
         when(eventManager.findEventById(eq(2L))).thenReturn(event);
         //when
         eventService.updateEventByInitiator(1L, 2L, updateEventRequest);
-        verify(eventMapper, times(1)).update(any(), any(), eventCaptor.capture());
+        verify(eventMapper, times(1)).update(any(), any(), eventCaptor.capture(),null);
         assertThat(eventCaptor.getValue().getState()).isEqualTo(StateEnum.PENDING);
     }
 }

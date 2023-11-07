@@ -29,7 +29,10 @@ public interface EventMapper {
 
     @Mapping(target = "category", source = "existCategory")
     @Mapping(target = "id", ignore = true)
-    void update(UpdateEventRequest updateEventRequest, Category existCategory, @MappingTarget Event event);
+    @Mapping(target = "places", source = "places")
+    @Mapping(target = "lat", source = "updateEventRequest.location.lat")
+    @Mapping(target = "lon", source = "updateEventRequest.location.lon")
+    void update(UpdateEventRequest updateEventRequest, Category existCategory, @MappingTarget Event event, List<Place> places);
 
     EventRequestStatusUpdateResult map(List<Request> confirmedRequests, List<Request> rejectedRequests);
 
