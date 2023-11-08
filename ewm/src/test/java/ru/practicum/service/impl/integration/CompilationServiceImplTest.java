@@ -52,6 +52,8 @@ class CompilationServiceImplTest {
                 .description("Description teeeeeeest")
                 .eventDate(LocalDateTime.now().plusDays(5))
                 .initiator(initiator)
+                .lat(55.729949)
+                .lon(37.601735)
                 .paid(true)
                 .participantLimit(0)
                 .requestModeration(false)

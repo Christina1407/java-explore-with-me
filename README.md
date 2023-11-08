@@ -6,7 +6,7 @@
 
 Теперь администратор может добавлять в отдельную таблицу `places` конкретные локации(места) — города, театры, концертные залы и другие.
 
-_Пример: 55.826837, 37.389086, 170 м, Крокус Сити Холл, Concert Hall, ALL, indoors_;
+_Пример: 55.826837, 37.389086, 170 м, Крокус Сити Холл, Concert hall, ALL, indoors_;
 
 **Place**:
 
@@ -18,7 +18,7 @@ _radius*_ - радиус области покрытия в метрах;
 
 _name*_ - название места;
 
-_type*_ - типы локаций хранятся в отдельной таблице, которая предварительно заполнена: Cinema, Concert Hall, Theatre, For Children, Exhibition, Sport, Stand-up, Quest, Park, City, Village, Restaurant, Cafe, Hotel, Beauty Salon, Shopping Center, Tourist Club,yacht Club, Rental Point, Boat Station, Christmas And New Year;
+_type*_ - типы локаций хранятся в отдельной таблице, которая предварительно заполнена: Cinema, Concert hall, Theatre, For children, Exhibition, Sport, Stand-up, Quest, Park, City, Village, Restaurant, Cafe, Hotel, Beauty salon, Shopping center, Tourist club, Yacht club, Rental Agency, Boat station, Christmas and New Year, Place of interest, Country club;
 
 _season_ - сезон, когда доступно это место, если круглогодично или не указано, то ALL.
 

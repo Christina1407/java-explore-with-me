@@ -107,7 +107,8 @@ public class PlaceServiceImpl implements PlaceService {
 
     private void validateParams(ParamSearchPlace params) {
         if (nonNull(params.getCompareRadius()) && isNull(params.getRadius())) {
-            throw new ConflictException("test", "test"); // FIXME!!!
+            log.error("There is no place's radius in request params {}", params);
+            throw new ConflictException("There is no place's radius in request params", "For the requested operation the conditions are not met.");
         }
         if (isNull(params.getCompareRadius())) {
             params.setCompareRadius(CompareEnum.EQUAL);
@@ -119,12 +120,15 @@ public class PlaceServiceImpl implements PlaceService {
 
     private void existsByName(String placeName) {
         if (placeRepository.existsByName(placeName)) {
-            throw new ConflictException("Constraint unique_place_name", "Integrity constraint has been violated.");
+            log.error("Constraint unique_place_name {}", placeName);
+            throw new ConflictException(String.format("Constraint unique_place_name %s", placeName), "Integrity constraint has been violated.");
         }
     }
+
     private void existsByCoordinates(Double latitude, Double longitude) {
         if (placeRepository.existsByLatitudeAndLongitude(latitude, longitude)) {
-            throw new ConflictException(String.format("Место с координатами lat = %f и lon = %f уже есть в базе", latitude, latitude),
+            log.error("The place with coordinates lat = {} and lon = {} already exists in the database", latitude, longitude);
+            throw new ConflictException(String.format("The place with coordinates lat = %f and lon = %f already exists in the database", latitude, latitude),
                     "Integrity constraint has been violated.");
         }
     }

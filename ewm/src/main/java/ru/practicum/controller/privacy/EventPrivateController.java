@@ -55,7 +55,6 @@ public class EventPrivateController {
     @PatchMapping("{eventId}")
     public EventFullDto updateEventByInitiator(@PathVariable("userId") @Min(1) Long userId,
                                                @PathVariable("eventId") @Min(1) Long eventId,
-                                               HttpServletRequest httpServletRequest,
                                                @RequestBody @Valid UpdateEventRequest updateEventUserRequest) {
 
         //Если меняется состояние события, то значения могут быть SEND_TO_REVIEW или CANCEL_REVIEW

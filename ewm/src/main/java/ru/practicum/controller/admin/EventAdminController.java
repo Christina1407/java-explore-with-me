@@ -47,7 +47,7 @@ public class EventAdminController {
     @GetMapping
     public List<EventFullDto> findEventsByAdmin(@Valid ParamsForAdmin params,
                                                 @Valid SearchArea searchArea,
-                                                @RequestParam(name = "from", defaultValue = "0")@Min(0) int from,
+                                                @RequestParam(name = "from", defaultValue = "0") @Min(0) int from,
                                                 @RequestParam(name = "size", defaultValue = "10") @Min(1) int size) {
 
         log.info("Получение администратором данных по параметрам = {} {}", params, searchArea);

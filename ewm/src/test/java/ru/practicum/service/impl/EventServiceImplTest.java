@@ -7,7 +7,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import ru.practicum.StatClient;
 import ru.practicum.exception.NotFoundException;
 import ru.practicum.manager.CategoryManager;
 import ru.practicum.manager.EventManager;
@@ -26,6 +25,7 @@ import ru.practicum.repo.RequestRepository;
 import ru.practicum.service.EventService;
 
 import javax.persistence.EntityManager;
+import java.util.ArrayList;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -47,8 +47,6 @@ class EventServiceImplTest {
     @Mock
     private CategoryManager categoryManager;
     @Mock
-    private StatClient statClient;
-    @Mock
     private RequestMapper requestMapper;
     @Mock
     private EntityManager entityManager;
@@ -65,6 +63,7 @@ class EventServiceImplTest {
                 eventMapper, categoryManager, requestMapper, entityManager, placeManager);
         event = Event.builder()
                 .initiator(User.builder().id(1L).build())
+                .places(new ArrayList<>())
                 .build();
     }
 
@@ -93,7 +92,7 @@ class EventServiceImplTest {
         when(eventManager.findEventById(eq(2L))).thenReturn(event);
         //when
         eventService.updateEventByInitiator(1L, 2L, updateEventRequest);
-        verify(eventMapper, times(1)).update(any(), any(), eventCaptor.capture(),null);
+        verify(eventMapper, times(1)).update(any(), any(), eventCaptor.capture(), any());
         assertThat(eventCaptor.getValue().getState()).isEqualTo(StateEnum.PENDING);
     }
 }

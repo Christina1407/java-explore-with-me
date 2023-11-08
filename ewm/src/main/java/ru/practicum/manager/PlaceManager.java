@@ -30,6 +30,7 @@ public class PlaceManager {
     public Place findPlaceByIdOrThrow(Long placeId) {
         return placeRepository.findById(placeId).orElseThrow(() -> new NotFoundException(String.format("Place with id =  %d was not found", placeId)));
     }
+
     public List<Place> findPlaces(List<Long> placeIds) {
         if (nonNull(placeIds)) {
             List<Place> places = placeRepository.findAllById(placeIds);
@@ -75,7 +76,7 @@ public class PlaceManager {
     }
 
     public void checkPlaces(Double lat, Double lon, List<Place> places) {
-        if(isNull(places) || places.isEmpty()) {
+        if (isNull(places) || places.isEmpty()) {
             return;
         }
         places.forEach(place -> {

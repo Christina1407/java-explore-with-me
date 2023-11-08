@@ -153,7 +153,7 @@ public class EventServiceImpl implements EventService {
         //Дата и время, на которые намечено событие не может быть раньше, чем через два часа от текущего момента
         checkEventDate(updateEventUserRequest, 2);
 
-        //Проверка координат и мест при их изменении
+        //Проверка координат и мест
         LocationDto location = updateEventUserRequest.getLocation();
         List<Long> placesIds = updateEventUserRequest.getPlaces();
         List<Place> places = checkLocationAndPlaces(location, placesIds, eventForUpdate);
