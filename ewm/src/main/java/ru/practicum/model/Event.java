@@ -24,7 +24,7 @@ public class Event {
     private Long id;
     @Column(name = "annotation", nullable = false, length = 2000)
     private String annotation;
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
     @Column(name = "description", nullable = false, length = 7000)
@@ -36,12 +36,9 @@ public class Event {
     private LocalDateTime createdOn;
     @Column(name = "published_date", nullable = false)
     private LocalDateTime publishedOn;
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "initiator_id", nullable = false)
     private User initiator;
-    @ManyToOne
-    @JoinColumn(name = "location_id", nullable = false)
-    private Location location;
     @Column(name = "paid")
     private boolean paid;
     @Column(name = "participant_limit")
@@ -53,16 +50,22 @@ public class Event {
     @Column(name = "state", nullable = false)
     @Enumerated(EnumType.STRING)
     private StateEnum state;
+    @Column(name = "lat", nullable = false)
+    private Double lat;
+    @Column(name = "lon", nullable = false)
+    private Double lon;
     @OneToMany(mappedBy = "event")
     private List<Request> requests;
-    @ManyToMany
-    @JoinTable(
-            name = "events_compilations",
-            joinColumns = @JoinColumn(name = "event_id"),
-            inverseJoinColumns = @JoinColumn(name = "compilation_id"))
-    List<Compilation> compilations;
     @Transient
     private Long views;
     @Transient
     private Long confirmedRequests;
+    @ManyToMany
+    @JoinTable(
+            name = "events_places",
+            joinColumns = @JoinColumn(name = "event_id"),
+            inverseJoinColumns = @JoinColumn(name = "place_id"))
+    private List<Place> places;
+    @Transient
+    private Double distance;
 }

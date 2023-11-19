@@ -7,13 +7,12 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import ru.practicum.StatClient;
 import ru.practicum.exception.NotFoundException;
 import ru.practicum.manager.CategoryManager;
 import ru.practicum.manager.EventManager;
+import ru.practicum.manager.PlaceManager;
 import ru.practicum.manager.UserManager;
 import ru.practicum.mapper.EventMapper;
-import ru.practicum.mapper.LocationMapper;
 import ru.practicum.mapper.RequestMapper;
 import ru.practicum.model.Event;
 import ru.practicum.model.User;
@@ -22,11 +21,11 @@ import ru.practicum.model.dto.UpdateEventRequest;
 import ru.practicum.model.enums.StateActionEnum;
 import ru.practicum.model.enums.StateEnum;
 import ru.practicum.repo.EventRepository;
-import ru.practicum.repo.LocationRepository;
 import ru.practicum.repo.RequestRepository;
 import ru.practicum.service.EventService;
 
 import javax.persistence.EntityManager;
+import java.util.ArrayList;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -48,15 +47,11 @@ class EventServiceImplTest {
     @Mock
     private CategoryManager categoryManager;
     @Mock
-    private LocationRepository locationRepository;
-    @Mock
-    private LocationMapper locationMapper;
-    @Mock
-    private StatClient statClient;
-    @Mock
     private RequestMapper requestMapper;
     @Mock
     private EntityManager entityManager;
+    @Mock
+    private PlaceManager placeManager;
     @Captor
     ArgumentCaptor<Event> eventCaptor;
     private EventService eventService;
@@ -65,9 +60,10 @@ class EventServiceImplTest {
     @BeforeEach
     void setUp() {
         eventService = new EventServiceImpl(userManager, eventManager, eventRepository, requestRepository,
-                eventMapper, categoryManager, locationRepository, locationMapper, statClient, requestMapper, entityManager);
+                eventMapper, categoryManager, requestMapper, entityManager, placeManager);
         event = Event.builder()
                 .initiator(User.builder().id(1L).build())
+                .places(new ArrayList<>())
                 .build();
     }
 
@@ -96,7 +92,7 @@ class EventServiceImplTest {
         when(eventManager.findEventById(eq(2L))).thenReturn(event);
         //when
         eventService.updateEventByInitiator(1L, 2L, updateEventRequest);
-        verify(eventMapper, times(1)).update(any(), any(), eventCaptor.capture());
+        verify(eventMapper, times(1)).update(any(), any(), eventCaptor.capture(), any());
         assertThat(eventCaptor.getValue().getState()).isEqualTo(StateEnum.PENDING);
     }
 }

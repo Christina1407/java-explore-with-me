@@ -26,5 +26,5 @@ public class Compilation {
             name = "events_compilations",
             joinColumns = @JoinColumn(name = "compilation_id"),
             inverseJoinColumns = @JoinColumn(name = "event_id"))
-    List<Event> events;
+    private List<Event> events;
 }

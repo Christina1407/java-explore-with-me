@@ -4,20 +4,20 @@ import lombok.*;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
 
 @Getter
-@Setter
-@AllArgsConstructor
 @NoArgsConstructor
+@Setter
 @Builder
-public class LocationDto {
-    @NotNull(message = "latitude is null")
+@AllArgsConstructor
+@ToString
+public class SearchArea {
     @Min(value = -90, message = "latitude cannot be less than -90")
     @Max(value = 90, message = "latitude cannot be more than 90")
     private Double lat;
-    @NotNull(message = "longitude is null")
     @Min(value = -180, message = "longitude cannot be less than -180")
     @Max(value = 180, message = "longitude cannot be more than 180")
     private Double lon;
+    @Min(value = 1, message = "radius cannot be less than 1 m")
+    private Integer radius;
 }

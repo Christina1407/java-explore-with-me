@@ -46,14 +46,13 @@ public class EventServiceImplTest {
     private UserRepository userRepository;
     @Autowired
     private CategoryRepository categoryRepository;
-    @Autowired
-    private LocationRepository locationRepository;
     @MockBean
     private StatClient statClient;
     private Event event;
     private User initiator;
     private Category category;
-    private Location location;
+    @Autowired
+    private PlaceRepository placeRepository;
 
     @BeforeEach
     void setUp() {
@@ -61,15 +60,14 @@ public class EventServiceImplTest {
         initiator = userRepository.save(initiator);
         category = new Category(null, "test");
         category = categoryRepository.save(category);
-        location = new Location(null, -85.1388F, 81.6359F);
-        location = locationRepository.save(location);
         event = Event.builder()
                 .annotation("Annotation teeeeeeest")
                 .category(category)
                 .description("Description teeeeeeest")
                 .eventDate(LocalDateTime.now().plusDays(5))
                 .initiator(initiator)
-                .location(location)
+                .lat(55.6665)
+                .lon(37.5326)
                 .paid(true)
                 .participantLimit(0)
                 .requestModeration(true)
@@ -167,7 +165,8 @@ public class EventServiceImplTest {
                 .eventDate(LocalDateTime.now().plusDays(6))
                 .publishedOn(LocalDateTime.now())
                 .initiator(initiator)
-                .location(location)
+                .lat(55.729949)
+                .lon(37.601735)
                 .paid(true)
                 .participantLimit(0)
                 .requestModeration(true)
@@ -182,7 +181,8 @@ public class EventServiceImplTest {
                 .eventDate(LocalDateTime.now().plusDays(5))
                 .publishedOn(LocalDateTime.now())
                 .initiator(initiator)
-                .location(location)
+                .lat(55.729949)
+                .lon(37.601735)
                 .paid(true)
                 .participantLimit(0)
                 .requestModeration(true)
@@ -197,7 +197,8 @@ public class EventServiceImplTest {
                 .eventDate(LocalDateTime.now().plusDays(5))
                 .publishedOn(LocalDateTime.now())
                 .initiator(initiator)
-                .location(location)
+                .lat(55.729949)
+                .lon(37.601735)
                 .paid(false)
                 .participantLimit(0)
                 .requestModeration(true)
@@ -212,7 +213,7 @@ public class EventServiceImplTest {
         Pageable pageable = PageRequest.of(0 / 10, 10, Sort.by(Sort.Direction.ASC, SortEnum.EVENT_DATE.getName()));
 
         //when
-        List<EventShortDto> events = eventService.findEventsPublic(paramsForPublic, pageable);
+        List<EventShortDto> events = eventService.findEventsPublic(paramsForPublic, new SearchArea(null, null, null), 0, 10, SortEnum.EVENT_DATE);
         //then
         assertThat(events).isNotEmpty();
         assertThat(events.size()).isEqualTo(2);
@@ -320,7 +321,8 @@ public class EventServiceImplTest {
                 .eventDate(LocalDateTime.now().plusDays(1))
                 .publishedOn(LocalDateTime.now())
                 .initiator(initiator)
-                .location(location)
+                .lat(55.729949)
+                .lon(37.601735)
                 .paid(true)
                 .participantLimit(0)
                 .requestModeration(true)
@@ -344,7 +346,8 @@ public class EventServiceImplTest {
                 .eventDate(LocalDateTime.now().plusDays(2))
                 .publishedOn(LocalDateTime.now())
                 .initiator(initiator)
-                .location(location)
+                .lat(55.729949)
+                .lon(37.601735)
                 .paid(true)
                 .participantLimit(2)
                 .requestModeration(true)
@@ -382,7 +385,8 @@ public class EventServiceImplTest {
                 .eventDate(LocalDateTime.now().plusDays(3))
                 .publishedOn(LocalDateTime.now())
                 .initiator(initiator)
-                .location(location)
+                .lat(55.729949)
+                .lon(37.601735)
                 .paid(false)
                 .participantLimit(1)
                 .requestModeration(true)
@@ -406,7 +410,8 @@ public class EventServiceImplTest {
                 .eventDate(LocalDateTime.now().plusDays(4))
                 .publishedOn(LocalDateTime.now())
                 .initiator(initiator)
-                .location(location)
+                .lat(55.729949)
+                .lon(37.601735)
                 .paid(false)
                 .participantLimit(1)
                 .requestModeration(true)
@@ -437,7 +442,8 @@ public class EventServiceImplTest {
                 .eventDate(LocalDateTime.now().plusDays(5))
                 .publishedOn(LocalDateTime.now())
                 .initiator(initiator)
-                .location(location)
+                .lat(55.729949)
+                .lon(37.601735)
                 .paid(false)
                 .participantLimit(10)
                 .requestModeration(true)
@@ -454,7 +460,8 @@ public class EventServiceImplTest {
                 .eventDate(LocalDateTime.now().plusDays(6))
                 .publishedOn(LocalDateTime.now())
                 .initiator(initiator)
-                .location(location)
+                .lat(55.729949)
+                .lon(37.601735)
                 .paid(false)
                 .participantLimit(0)
                 .requestModeration(true)
@@ -469,7 +476,7 @@ public class EventServiceImplTest {
         Pageable pageable = PageRequest.of(0 / 10, 10, Sort.by(Sort.Direction.ASC, SortEnum.EVENT_DATE.getName()));
 
         //when
-        List<EventShortDto> events = eventService.findEventsPublic(paramsForPublic, pageable);
+        List<EventShortDto> events = eventService.findEventsPublic(paramsForPublic, new SearchArea(null, null, null), 0, 10, SortEnum.EVENT_DATE);
         //then
         assertThat(events).isNotEmpty();
         assertThat(events.size()).isEqualTo(5);
@@ -488,7 +495,8 @@ public class EventServiceImplTest {
                 .eventDate(LocalDateTime.now().plusDays(1))
                 .publishedOn(LocalDateTime.now())
                 .initiator(initiator)
-                .location(location)
+                .lat(55.729949)
+                .lon(37.601735)
                 .paid(true)
                 .participantLimit(0)
                 .requestModeration(true)
@@ -504,7 +512,8 @@ public class EventServiceImplTest {
                 .eventDate(LocalDateTime.now().plusDays(2))
                 .publishedOn(LocalDateTime.now())
                 .initiator(initiator)
-                .location(location)
+                .lat(55.729949)
+                .lon(37.601735)
                 .paid(true)
                 .participantLimit(2)
                 .requestModeration(true)
@@ -524,7 +533,8 @@ public class EventServiceImplTest {
                 .eventDate(LocalDateTime.now().plusDays(3))
                 .publishedOn(LocalDateTime.now())
                 .initiator(initiator)
-                .location(location)
+                .lat(55.729949)
+                .lon(37.601735)
                 .paid(false)
                 .participantLimit(1)
                 .requestModeration(true)
@@ -538,7 +548,7 @@ public class EventServiceImplTest {
         Pageable pageable = PageRequest.of(0 / 10, 10, Sort.by(Sort.Direction.ASC, "id"));
 
         //when
-        List<EventFullDto> events = eventService.findEventsByAdmin(params, pageable);
+        List<EventFullDto> events = eventService.findEventsByAdmin(params, pageable, new SearchArea(null, null, null));
 
         //then
         assertThat(events).isNotEmpty();
@@ -558,7 +568,8 @@ public class EventServiceImplTest {
                 .eventDate(LocalDateTime.now().plusDays(1))
                 .publishedOn(LocalDateTime.now())
                 .initiator(initiator)
-                .location(location)
+                .lat(55.729949)
+                .lon(37.601735)
                 .paid(true)
                 .participantLimit(0)
                 .requestModeration(true)
@@ -574,7 +585,8 @@ public class EventServiceImplTest {
                 .eventDate(LocalDateTime.now().plusDays(2))
                 .publishedOn(LocalDateTime.now())
                 .initiator(initiator)
-                .location(location)
+                .lat(55.729949)
+                .lon(37.601735)
                 .paid(true)
                 .participantLimit(2)
                 .requestModeration(true)
@@ -592,7 +604,8 @@ public class EventServiceImplTest {
                 .eventDate(LocalDateTime.now().plusDays(3))
                 .publishedOn(LocalDateTime.now())
                 .initiator(initiator)
-                .location(location)
+                .lat(55.729949)
+                .lon(37.601735)
                 .paid(false)
                 .participantLimit(1)
                 .requestModeration(true)
@@ -607,7 +620,7 @@ public class EventServiceImplTest {
         Pageable pageable = PageRequest.of(0 / 10, 10, Sort.by(Sort.Direction.ASC, "id"));
 
         //when
-        List<EventFullDto> events = eventService.findEventsByAdmin(params, pageable);
+        List<EventFullDto> events = eventService.findEventsByAdmin(params, pageable, new SearchArea(null, null, null));
         //then
         assertThat(events).isNotEmpty();
         assertThat(events.size()).isEqualTo(1);
@@ -617,8 +630,106 @@ public class EventServiceImplTest {
         //before
         params.setCategories(List.of(category1.getId()));
         //when
-        List<EventFullDto> events2 = eventService.findEventsByAdmin(params, pageable);
+        List<EventFullDto> events2 = eventService.findEventsByAdmin(params, pageable, new SearchArea(null, null, null));
         //then
         assertThat(events2).isEmpty();
+    }
+
+    @Test
+    void findEventsAdminPlace() {
+        //before
+        Place place1 = Place.builder()
+                .latitude(55.729949)
+                .longitude(37.601735)
+                .radius(800)
+                .name("Парк")
+                .type(new PlaceType(1L, "A"))
+                .build();
+        place1 = placeRepository.save(place1);
+
+        Place place2 = Place.builder()
+                .latitude(55.6665)
+                .longitude(37.5326)
+                .radius(500)
+                .name("Парк2")
+                .type(new PlaceType(2L, "B"))
+                .build();
+        place2 = placeRepository.save(place2);
+        Event event1 = Event.builder()
+                .annotation("Palaeoanthropologist")
+                .category(category)
+                .description("Indistinguishability")
+                .eventDate(LocalDateTime.now().plusDays(1))
+                .publishedOn(LocalDateTime.now())
+                .initiator(initiator)
+                .lat(55.729949)
+                .lon(37.601735)
+                .paid(true)
+                .participantLimit(0)
+                .requestModeration(true)
+                .title("title")
+                .state(StateEnum.CANCELED)
+                .places(List.of(place1))
+                .build();
+        event1 = eventRepository.save(event1);
+
+        Event event2 = Event.builder()
+                .annotation("Золотопромышленность")
+                .category(category)
+                .description("Деревообрабатывающий")
+                .eventDate(LocalDateTime.now().plusDays(2))
+                .publishedOn(LocalDateTime.now())
+                .initiator(initiator)
+                .lat(55.6665)
+                .lon(37.5326)
+                .paid(true)
+                .participantLimit(2)
+                .requestModeration(true)
+                .title("title")
+                .state(StateEnum.PUBLISHED)
+                .places(List.of(place2))
+                .build();
+        event2 = eventRepository.save(event2);
+
+        Category category1 = new Category(null, "test1");
+        category1 = categoryRepository.save(category1);
+        Event event3 = Event.builder()
+                .annotation("Лжесвидетельствовать")
+                .category(category1)
+                .description("Предводительствовать")
+                .eventDate(LocalDateTime.now().plusDays(3))
+                .publishedOn(LocalDateTime.now())
+                .initiator(initiator)
+                .lat(55.6665)
+                .lon(37.5326)
+                .paid(false)
+                .participantLimit(1)
+                .requestModeration(true)
+                .title("title")
+                .state(StateEnum.PUBLISHED)
+                .places(List.of(place2))
+                .build();
+        event3 = eventRepository.save(event3);
+
+        ParamsForAdmin params = ParamsForAdmin.builder().build();
+        params.setPlaces(List.of(place1.getId()));
+        Pageable pageable = PageRequest.of(0 / 10, 10, Sort.by(Sort.Direction.ASC, "id"));
+
+        //when
+        List<EventFullDto> events = eventService.findEventsByAdmin(params, pageable, new SearchArea(null, null, null));
+        //then
+        assertThat(events).isNotEmpty();
+        assertThat(events.size()).isEqualTo(1);
+        assertThat(events.get(0).getAnnotation()).isEqualTo(event1.getAnnotation());
+
+
+        //before
+        params.setPlaces(List.of(place2.getId()));
+        //when
+        List<EventFullDto> events2 = eventService.findEventsByAdmin(params, pageable, new SearchArea(null, null, null));
+        //then
+        assertThat(events2).isNotEmpty();
+        assertThat(events2.size()).isEqualTo(2);
+        assertThat(events2.get(0).getAnnotation()).isEqualTo(event2.getAnnotation());
     }
 }

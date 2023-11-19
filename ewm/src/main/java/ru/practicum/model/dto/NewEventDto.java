@@ -9,6 +9,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -37,5 +38,6 @@ public class NewEventDto {
     @NotBlank(message = "title is empty")
     @Size(min = 3, max = 120, message = "title minLength = 3 maxLength = 120")
     private String title;
+    private List<Long> places;
 
 }

@@ -7,6 +7,7 @@ import ru.practicum.model.enums.StateActionEnum;
 import javax.validation.constraints.Future;
 import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -31,4 +32,5 @@ public class UpdateEventRequest {
     private StateActionEnum stateAction;
     @Size(min = 3, max = 120, message = "title minLength = 3 maxLength = 120")
     private String title;
+    private List<Long> places;
 }

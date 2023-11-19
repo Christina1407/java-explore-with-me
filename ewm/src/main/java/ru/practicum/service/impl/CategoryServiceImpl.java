@@ -39,7 +39,7 @@ public class CategoryServiceImpl implements CategoryService {
         Category category = categoryManager.findCategoryById(categoryId);
         //проверка, что у категории нет привязанных событий
         if (eventRepository.existsByCategoryId(categoryId)) {
-            log.error("Attempt to delete category id = {}. The category id is not empty", category);
+            log.error("Attempt to delete category id = {}. The category is not empty", categoryId);
             throw new ConflictException(String.format("The category id = %d is not empty", categoryId),
                     "For the requested operation the conditions are not met.");
         }

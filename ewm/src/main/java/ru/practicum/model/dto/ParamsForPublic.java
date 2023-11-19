@@ -7,6 +7,7 @@ import lombok.*;
 @Setter
 @Builder
 @AllArgsConstructor
+@ToString(callSuper = true)
 public class ParamsForPublic extends GetEventsRequestParam {
     private String text;
     private Boolean paid;

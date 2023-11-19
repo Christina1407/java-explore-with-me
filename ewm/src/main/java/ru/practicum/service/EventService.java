@@ -2,6 +2,7 @@ package ru.practicum.service;
 
 import org.springframework.data.domain.Pageable;
 import ru.practicum.model.dto.*;
+import ru.practicum.model.enums.SortEnum;
 
 import java.util.List;
 
@@ -13,7 +14,7 @@ public interface EventService {
 
     EventFullDto findEventByIdPublic(Long eventId);
 
-    List<EventShortDto> findEventsPublic(ParamsForPublic params, Pageable pageable);
+    List<EventShortDto> findEventsPublic(ParamsForPublic params, SearchArea searchArea, int from, int size, SortEnum sort);
 
     EventFullDto updateEventByAdmin(Long eventId, UpdateEventRequest updateEventAdminRequest);
 
@@ -25,5 +26,5 @@ public interface EventService {
 
     List<EventShortDto> findInitiatorEvents(Long userId, Pageable pageable);
 
-    List<EventFullDto> findEventsByAdmin(ParamsForAdmin params, Pageable pageable);
+    List<EventFullDto> findEventsByAdmin(ParamsForAdmin params, Pageable pageable, SearchArea searchArea);
 }
