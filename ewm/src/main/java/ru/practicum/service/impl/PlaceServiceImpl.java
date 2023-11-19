@@ -106,12 +106,12 @@ public class PlaceServiceImpl implements PlaceService {
     }
 
     private void validateParams(ParamSearchPlace params) {
-        if (nonNull(params.getCompareRadius()) && isNull(params.getRadius())) {
+        if (nonNull(params.getComparison()) && isNull(params.getRadius())) {
             log.error("There is no place's radius in request params {}", params);
             throw new ConflictException("There is no place's radius in request params", "For the requested operation the conditions are not met.");
         }
-        if (isNull(params.getCompareRadius())) {
-            params.setCompareRadius(CompareEnum.EQUAL);
+        if (isNull(params.getComparison())) {
+            params.setComparison(CompareEnum.EQUAL);
         }
         if (isNull(params.getSeason())) {
             params.setSeason(SeasonEnum.ALL);
@@ -148,11 +148,11 @@ public class PlaceServiceImpl implements PlaceService {
             where.and(QPlace.place.type.id.in(params.getTypes()));
         }
         if (nonNull(params.getRadius())) {
-            if (params.getCompareRadius().equals(CompareEnum.EQUAL)) {
+            if (params.getComparison().equals(CompareEnum.EQUAL)) {
                 where.and(QPlace.place.radius.eq(params.getRadius()));
-            } else if (params.getCompareRadius().equals(CompareEnum.GT)) {
+            } else if (params.getComparison().equals(CompareEnum.GREATER_THAN)) {
                 where.and(QPlace.place.radius.gt(params.getRadius()));
-            } else if (params.getCompareRadius().equals(CompareEnum.LT)) {
+            } else if (params.getComparison().equals(CompareEnum.LESS_THAN)) {
                 where.and(QPlace.place.radius.lt(params.getRadius()));
             }
         }

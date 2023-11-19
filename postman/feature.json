@@ -1076,7 +1076,7 @@
 			"response": []
 		},
 		{
-			"name": "Поск мест с фильтрами types больше радиуса заданного",
+			"name": "Поск мест с фильтрами больше заданного радиуса",
 			"event": [
 				{
 					"listen": "test",
@@ -1105,7 +1105,7 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:8080/admin/places/filters?compareRadius=GT&&radius=999",
+					"raw": "http://localhost:8080/admin/places/filters?comparison=GREATER_THAN&&radius=999",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -1118,8 +1118,8 @@
 					],
 					"query": [
 						{
-							"key": "compareRadius",
-							"value": "GT"
+							"key": "comparison",
+							"value": "GREATER_THAN"
 						},
 						{
 							"key": null,
@@ -1135,7 +1135,7 @@
 			"response": []
 		},
 		{
-			"name": "Поск местc фильтрами без radius",
+			"name": "Поск мест c фильтрами без radius",
 			"event": [
 				{
 					"listen": "test",
@@ -1155,7 +1155,7 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:8080/admin/places/filters?compareRadius=GT",
+					"raw": "http://localhost:8080/admin/places/filters?comparison=GREATER_THAN",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -1168,8 +1168,8 @@
 					],
 					"query": [
 						{
-							"key": "compareRadius",
-							"value": "GT"
+							"key": "comparison",
+							"value": "GREATER_THAN"
 						}
 					]
 				}
@@ -1427,7 +1427,7 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:8080/admin/places/filters?text=парк&&compareRadius=GT&&radius=500",
+					"raw": "http://localhost:8080/admin/places/filters?text=парк&&comparison=GREATER_THAN&&radius=500",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -1448,8 +1448,8 @@
 							"value": null
 						},
 						{
-							"key": "compareRadius",
-							"value": "GT"
+							"key": "comparison",
+							"value": "GREATER_THAN"
 						},
 						{
 							"key": null,

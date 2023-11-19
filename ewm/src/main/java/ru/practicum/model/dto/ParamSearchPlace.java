@@ -17,7 +17,7 @@ import java.util.List;
 public class ParamSearchPlace {
     private String text;
     private List<Long> types;
-    CompareEnum compareRadius;
+    CompareEnum comparison;
     @Min(1)
     Integer radius;
     SeasonEnum season;
